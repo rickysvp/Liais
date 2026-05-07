@@ -1,0 +1,134 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  name      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  profile       Profile?
+  subscriptions Subscription[]
+  usageLog      UsageLedger[]
+  onboardingDraft OnboardingDraft?
+}
+
+model Profile {
+  id                          String   @id @default(uuid())
+  userId                      String   @unique
+  slug                        String   @unique
+  displayName                 String
+  headline                    String?
+  companyOrProject            String?
+  city                        String?
+  whatYouDo                   String?
+  whoYouHelp                  String?
+  currentFocus                String?
+  topicsYouLike               String?
+  websiteUrl                  String?
+  linkedinUrl                 String?
+  twitterUrl                  String?
+  generatedIntro              String?
+  generatedWelcomeMessage     String?
+  generatedContactScopeText   String?
+  primaryConnectionGoal       String?
+  personaType                 String?
+  secretaryTone               String?
+  greetingStyle               String?
+  screeningStyle              String?
+  isPublished                 Boolean  @default(false)
+  createdAt                   DateTime @default(now())
+  updatedAt                   DateTime @updatedAt
+
+  user                        User                          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  preferences                 ProfileConnectionPreference[]
+  boundaries                  ProfileBoundary[]
+  visitorConversations        VisitorConversation[]
+}
+
+model ProfileConnectionPreference {
+  id        String   @id @default(uuid())
+  profileId String
+  type      String
+  status    String   // open / closed / preferred
+
+  profile Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+}
+
+model ProfileBoundary {
+  id            String   @id @default(uuid())
+  profileId     String
+  category      String
+  value         String
+  visibilityType String   // public / restricted / handoff_trigger / never_share
+
+  profile Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+}
+
+model OnboardingDraft {
+  id               String   @id @default(uuid())
+  sessionId        String?
+  userId           String?  @unique
+  step             Int      @default(1)
+  payload          String   // JSON string
+  previewGenerated Boolean  @default(false)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  user User? @relation(fields: [userId], references: [id])
+}
+
+model VisitorConversation {
+  id                    String   @id @default(uuid())
+  profileId             String
+  visitorName           String?
+  visitorCompany        String?
+  visitorBackground     String?
+  visitorReason         String?
+  visitorIntentCategory String?
+  requestedNextStep     String?
+  contactInfo           String?
+  transcript            String   // JSON string
+  summaryText           String?
+  qualificationLevel    String?
+  suggestedAction       String?
+  handoffNeeded         Boolean  @default(false)
+  status                String   @default("new")
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  profile Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+}
+
+model UsageLedger {
+  id              String   @id @default(uuid())
+  userId          String
+  conversationId  String?
+  actionType      String
+  creditsDelta    Int
+  createdAt       DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Subscription {
+  id             String   @id @default(uuid())
+  userId         String
+  planName       String   @default("Free")
+  status         String   @default("active")
+  monthlyCredits Int      @default(10)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
