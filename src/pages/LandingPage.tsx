@@ -1,6 +1,55 @@
 import { Link } from "react-router-dom";
+import { useLanguage } from "../contexts/LanguageContext";
+
+const translations = {
+  en: {
+    pricing: "Pricing",
+    logIn: "Log in",
+    signUpFree: "Sign up free",
+    yourAISecretary: "Your AI business secretary.",
+    heroTitle: "Let inbound business requests meet your AI first.",
+    heroSubtitle: "Introduce who you are, screen incoming intent, and review a clear brief before deciding whether to continue the connection.",
+    userNamePlaceholder: "yourname",
+    createLiais: "Create your Liais",
+    freeText: "It's free, and takes less than a minute.",
+    watchDemo: "Watch the intake flow",
+    founderCEO: "Founder & CEO",
+    aiGreeting: "Hi, I'm Alex's AI secretary. I handle all incoming requests. Who are you?",
+    userGreeting: "I'm Ricky. I'd love to reach out about a partnership.",
+    aiResponse: "Sounds great. Please provide a bit of context so I can qualify the request.",
+    typeMessagePlaceholder: "Type a professional message...",
+    intentCaptured: "Intent Captured",
+    readyToReview: "Ready to review",
+    meetingBooked: "Meeting Booked",
+    syncedCalendar: "Synced to Calendar",
+  },
+  zh: {
+    pricing: "定价",
+    logIn: "登录",
+    signUpFree: "免费注册",
+    yourAISecretary: "您的 AI 商务秘书。",
+    heroTitle: "让您的入站商业请求先由 AI 处理。",
+    heroSubtitle: "介绍自己、筛选来访意图，并在决定是否继续联系之前审阅一份清晰的简报。",
+    userNamePlaceholder: "yourname",
+    createLiais: "创建您的 Liais",
+    freeText: "免费使用，而且只需不到一分钟即可完成。",
+    watchDemo: "观看接入流程展示",
+    founderCEO: "创始人兼 CEO",
+    aiGreeting: "您好，我是 Alex 的 AI 秘书。我负责处理所有收件请求。请问您怎么称呼？",
+    userGreeting: "我是 Ricky。我希望能和您探讨一下合作的事宜。",
+    aiResponse: "听起来不错。请提供一些背景信息，以便我确认您的请求资格。",
+    typeMessagePlaceholder: "输入一条专业的信息...",
+    intentCaptured: "已捕捉到意图",
+    readyToReview: "随时可查阅",
+    meetingBooked: "会议已预订",
+    syncedCalendar: "已同步到日历",
+  }
+};
 
 export default function LandingPage() {
+  const { language } = useLanguage();
+  const t = translations[language as keyof typeof translations] || translations.en;
+
   return (
     <div className="min-h-screen bg-[#F3F3F1] font-sans text-[#111] overflow-hidden relative flex flex-col selection:bg-[#E8EECC] selection:text-[#111]">
       {/* Decorative calm background elements */}
@@ -17,13 +66,13 @@ export default function LandingPage() {
            <span className="text-[#111] tracking-tight">Liais</span>
         </div>
         <div className="flex items-center gap-4 lg:gap-6">
-          <Link to="/pricing" className="text-[#4A4A46] font-semibold hover:text-[#111] transition-colors hidden sm:block">Pricing</Link>
-          <Link to="/dashboard" className="text-[#4A4A46] font-semibold hover:text-[#111] transition-colors hidden sm:block">Log in</Link>
+          <Link to="/pricing" className="text-[#4A4A46] font-semibold hover:text-[#111] transition-colors hidden sm:block">{t.pricing}</Link>
+          <Link to="/dashboard" className="text-[#4A4A46] font-semibold hover:text-[#111] transition-colors hidden sm:block">{t.logIn}</Link>
           <Link 
             to="/onboarding" 
             className="rounded-full bg-[#111] text-white px-6 py-3.5 font-bold hover:bg-slate-800 transition-transform hover:scale-[1.02] active:scale-95 text-sm lg:text-base shadow-sm"
           >
-            Sign up free
+            {t.signUpFree}
           </Link>
         </div>
       </nav>
@@ -38,13 +87,13 @@ export default function LandingPage() {
                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#D2E823] opacity-75"></span>
                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#b5c71b]"></span>
              </span>
-             Your AI business secretary.
+             {t.yourAISecretary}
           </div>
           <h1 className="text-[3.8rem] sm:text-[4.5rem] lg:text-[5rem] font-bold tracking-tight leading-[1.05] font-[family-name:var(--font-heading)] text-[#111]">
-            Let inbound business requests meet your AI first.
+            {t.heroTitle}
           </h1>
           <p className="text-xl sm:text-[1.25rem] text-[#4A4A46] font-medium leading-relaxed max-w-xl mx-auto lg:mx-0">
-            Introduce who you are, screen incoming intent, and review a clear brief before deciding whether to continue the connection.
+            {t.heroSubtitle}
           </p>
           
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-4 w-full max-w-xl mx-auto lg:mx-0">
@@ -52,7 +101,7 @@ export default function LandingPage() {
                 <span className="pl-5 text-slate-400 font-semibold text-lg shrink-0">liais.ai/</span>
                 <input 
                   type="text" 
-                  placeholder="yourname" 
+                  placeholder={t.userNamePlaceholder} 
                   className="flex-1 bg-transparent outline-none text-[#111] font-semibold text-lg min-w-0 placeholder:text-slate-300 ml-1 py-3" 
                 />
              </div>
@@ -60,18 +109,18 @@ export default function LandingPage() {
                 to="/onboarding"
                 className="h-[4.5rem] sm:h-auto py-4 px-8 sm:px-10 rounded-2xl sm:rounded-full bg-[#D2E823] hover:bg-[#C2D812] text-[#111] flex items-center justify-center font-bold text-lg transition-transform hover:scale-[1.02] active:scale-95 shadow-md whitespace-nowrap"
              >
-                Create your Liais
+                {t.createLiais}
              </Link>
           </div>
           
           <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3 sm:gap-4 mt-2">
             <div className="text-[#6C6C68] font-semibold text-[15px]">
-              It's free, and takes less than a minute.
+              {t.freeText}
             </div>
             <div className="hidden sm:block w-1.5 h-1.5 rounded-full bg-slate-300"></div>
             <Link to="/u/demo" className="text-[#111] font-bold text-[15px] underline underline-offset-4 decoration-slate-300 hover:decoration-[#111] transition-colors flex items-center gap-1.5">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-              Watch the intake flow
+              {t.watchDemo}
             </Link>
           </div>
         </div>
@@ -99,7 +148,7 @@ export default function LandingPage() {
                      A
                    </div>
                    <h3 className="text-2xl font-bold font-[family-name:var(--font-heading)] text-[#111] tracking-tight">Alex Innovator</h3>
-                   <p className="text-slate-500 font-medium text-[15px] mt-1">Founder & CEO</p>
+                   <p className="text-slate-500 font-medium text-[15px] mt-1">{t.founderCEO}</p>
                 </div>
 
                 {/* AI Chat Area */}
@@ -108,14 +157,14 @@ export default function LandingPage() {
                    <div className="flex items-start gap-3">
                      <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center text-[#111] text-[10px] font-bold shrink-0 mt-1 shadow-sm ring-4 ring-[#F3F3F1]">AI</div>
                      <div className="bg-white p-5 rounded-[1.5rem] rounded-tl-sm shadow-sm shadow-slate-200/50 border border-slate-100 text-[14px] font-medium text-slate-700 leading-relaxed max-w-[90%]">
-                        Hi, I'm Alex's AI secretary. I handle all incoming requests. Who are you?
+                        {t.aiGreeting}
                      </div>
                    </div>
 
                    {/* User Bubble */}
                    <div className="flex justify-end gap-3 mt-1">
                      <div className="bg-[#111] text-white p-5 rounded-[1.5rem] rounded-tr-sm shadow-md shadow-slate-900/10 text-[14px] font-medium leading-relaxed max-w-[85%] self-end">
-                       I'm Ricky. I'd love to reach out about a partnership.
+                       {t.userGreeting}
                      </div>
                    </div>
 
@@ -123,7 +172,7 @@ export default function LandingPage() {
                    <div className="flex items-start gap-3 mt-1">
                      <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center text-[#111] text-[10px] font-bold shrink-0 mt-1 shadow-sm ring-4 ring-[#F3F3F1]">AI</div>
                      <div className="bg-white p-5 rounded-[1.5rem] rounded-tl-sm shadow-sm shadow-slate-200/50 border border-slate-100 text-[14px] font-medium text-slate-700 leading-relaxed max-w-[90%] flex flex-col gap-4">
-                       <p>Sounds great. Please provide a bit of context so I can qualify the request.</p>
+                       <p>{t.aiResponse}</p>
                        <div className="h-10 bg-slate-50 border border-slate-200 rounded-xl w-full flex items-center px-4">
                           <div className="w-1.5 h-4 bg-[#D2E823] animate-pulse rounded-full shadow-[0_0_8px_#D2E823]"></div>
                        </div>
@@ -134,7 +183,7 @@ export default function LandingPage() {
                 {/* Bottom Input Field */}
                 <div className="relative z-20 w-full p-6 pt-12 bg-gradient-to-t from-[#F3F3F1] via-[#F3F3F1] to-transparent mt-auto backdrop-blur-sm">
                    <div className="w-full bg-white h-14 rounded-full border border-slate-200 shadow-sm flex items-center px-5">
-                      <span className="text-slate-400 font-medium text-[14px]">Type a professional message...</span>
+                      <span className="text-slate-400 font-medium text-[14px]">{t.typeMessagePlaceholder}</span>
                       <div className="ml-auto w-8 h-8 rounded-full bg-[#111] flex items-center justify-center -mr-1">
                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
                       </div>
@@ -149,8 +198,8 @@ export default function LandingPage() {
                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
               </div>
               <div>
-                <div className="font-bold text-sm tracking-tight text-[#111]">Intent Captured</div>
-                <div className="text-slate-400 text-xs font-medium uppercase tracking-wider">Ready to review</div>
+                <div className="font-bold text-sm tracking-tight text-[#111]">{t.intentCaptured}</div>
+                <div className="text-slate-400 text-xs font-medium uppercase tracking-wider">{t.readyToReview}</div>
               </div>
            </div>
            
@@ -159,8 +208,8 @@ export default function LandingPage() {
                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
                </div>
                <div>
-                 <div className="font-bold text-sm tracking-tight">Meeting Booked</div>
-                 <div className="text-white/60 text-xs font-medium uppercase tracking-wider">Synced to Calendar</div>
+                 <div className="font-bold text-sm tracking-tight">{t.meetingBooked}</div>
+                 <div className="text-white/60 text-xs font-medium uppercase tracking-wider">{t.syncedCalendar}</div>
                </div>
            </div>
            

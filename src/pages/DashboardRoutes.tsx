@@ -67,7 +67,9 @@ const translations = {
     recAcme: "High alignment with your Q3 distribution goals. I suggest accepting a 15-minute intro.",
     recDataSync: "A bit vague. I recommend asking for technical documentation before committing to a meeting.",
     deprioritizeLeadGen: "Cold sales pitch. We are not evaluating this right now.",
-    deprioritizeTechTalent: "Generic mass outreach."
+    deprioritizeTechTalent: "Generic mass outreach.",
+    archive: "Archive",
+    actionCompleted: "Action completed successfully."
   },
   zh: {
     dashboard: "仪表盘",
@@ -127,7 +129,9 @@ const translations = {
     recAcme: "非常符合您第三季度的分销目标。我建议接受一个15分钟的介绍会议。",
     recDataSync: "描述稍显模糊。我建议在同意会议之前要求提供技术文档。",
     deprioritizeLeadGen: "冷推销邮件。我们目前并未评估此类服务。",
-    deprioritizeTechTalent: "群发型的招聘触达。"
+    deprioritizeTechTalent: "群发型的招聘触达。",
+    archive: "归档",
+    actionCompleted: "操作已成功完成。"
   },
 };
 
@@ -153,7 +157,7 @@ function DashboardHome() {
     return t.goodEvening;
   };
 
-  const highPriority = [
+  const highPriorityInitial = [
     {
       id: "1",
       name: "David Chen",
@@ -179,7 +183,7 @@ function DashboardHome() {
     },
   ];
 
-  const mediumPriority = [
+  const mediumPriorityInitial = [
     {
       id: "3",
       name: "Mark T.",
@@ -193,7 +197,7 @@ function DashboardHome() {
     },
   ];
 
-  const lowPriority = [
+  const lowPriorityInitial = [
     {
       id: "4",
       name: "James Harrison",
@@ -212,8 +216,29 @@ function DashboardHome() {
     },
   ];
 
+  const [highPriority, setHighPriority] = useState(highPriorityInitial);
+  const [mediumPriority, setMediumPriority] = useState(mediumPriorityInitial);
+  const [lowPriority, setLowPriority] = useState(lowPriorityInitial);
+  const [actionDoneMsg, setActionDoneMsg] = useState("");
+
+  const handleAction = (id: string, listType: 'high' | 'medium' | 'low') => {
+    if (listType === 'high') setHighPriority(prev => prev.filter(i => i.id !== id));
+    if (listType === 'medium') setMediumPriority(prev => prev.filter(i => i.id !== id));
+    if (listType === 'low') setLowPriority(prev => prev.filter(i => i.id !== id));
+
+    setActionDoneMsg(t.actionCompleted);
+    setTimeout(() => setActionDoneMsg(""), 3000);
+  };
+
+  const totalCount = highPriority.length + mediumPriority.length + lowPriority.length;
+
   return (
-    <div className="max-w-4xl space-y-12 animate-in fade-in slide-in-from-bottom-2 pb-20">
+    <div className="max-w-4xl space-y-12 animate-in fade-in slide-in-from-bottom-2 pb-20 relative">
+      {actionDoneMsg && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-[#111] text-white px-4 py-2.5 rounded-full shadow-xl text-sm font-medium z-50 animate-in slide-in-from-bottom-4 fade-in">
+          {actionDoneMsg}
+        </div>
+      )}
       {/* Top Section - Greeting & Summary */}
       <div className="space-y-6">
         <h1 className="text-[28px] font-bold font-[family-name:var(--font-heading)] text-slate-900 tracking-tight">
@@ -225,19 +250,19 @@ function DashboardHome() {
 
         <div className="flex items-center gap-6 text-[14px]">
           <div className="flex items-center gap-2">
-            <span className="font-bold text-slate-900">5</span>
+            <span className="font-bold text-slate-900">{totalCount}</span>
             <span className="text-slate-500 font-medium">{t.totalToday}</span>
           </div>
           <div className="w-1 h-1 rounded-full bg-slate-300"></div>
           <div className="flex items-center gap-2">
-            <span className="font-bold text-indigo-600">3</span>
+            <span className="font-bold text-indigo-600">{highPriority.length + mediumPriority.length}</span>
             <span className="text-indigo-600/80 font-medium">
               {t.worthAttention}
             </span>
           </div>
           <div className="w-1 h-1 rounded-full bg-slate-300"></div>
           <div className="flex items-center gap-2">
-            <span className="font-bold text-slate-400">2</span>
+            <span className="font-bold text-slate-400">{lowPriority.length}</span>
             <span className="text-slate-400 font-medium">{t.canBeIgnored}</span>
           </div>
         </div>
@@ -290,10 +315,16 @@ function DashboardHome() {
                     {item.recommendation}
                   </p>
                 </div>
-                <div className="shrink-0 flex items-center justify-end w-full md:w-auto mt-2 md:mt-0">
+                <div className="shrink-0 flex items-center gap-2 w-full md:w-auto mt-2 md:mt-0">
+                  <button
+                    onClick={() => handleAction(item.id, 'high')}
+                    className="inline-flex items-center justify-center bg-transparent border border-slate-200 hover:bg-slate-50 text-slate-500 rounded-xl px-4 h-10 text-[13px] font-bold shadow-sm transition-colors"
+                  >
+                    {t.archive}
+                  </button>
                   {item.hasDraft ? (
                     <Link
-                      to="/dashboard/inbox"
+                      to={`/dashboard/inbox`}
                       className="inline-flex items-center justify-center bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl px-5 h-10 text-[13px] font-bold shadow-sm transition-colors"
                     >
                       {t.reviewDraft}
@@ -302,12 +333,12 @@ function DashboardHome() {
                       </span>
                     </Link>
                   ) : (
-                    <Link
-                      to="/dashboard/inbox"
+                    <button
+                      onClick={() => handleAction(item.id, 'high')}
                       className="inline-flex items-center justify-center bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-xl px-5 h-10 text-[13px] font-bold shadow-sm transition-colors"
                     >
                       {item.suggestedAction}
-                    </Link>
+                    </button>
                   )}
                 </div>
               </div>
@@ -350,13 +381,19 @@ function DashboardHome() {
                     {item.recommendation}
                   </p>
                 </div>
-                <div className="shrink-0">
-                  <Link
-                    to="/dashboard/inbox"
-                    className="inline-flex items-center justify-center bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 rounded-xl px-5 h-10 text-[13px] font-bold transition-colors"
+                <div className="shrink-0 flex items-center gap-2">
+                  <button
+                    onClick={() => handleAction(item.id, 'medium')}
+                    className="inline-flex items-center justify-center bg-transparent border border-amber-200/50 hover:bg-amber-50 text-slate-500 rounded-xl px-4 h-10 text-[13px] font-bold transition-colors"
                   >
-                    Ask for Details
-                  </Link>
+                    {t.archive}
+                  </button>
+                  <button
+                    onClick={() => handleAction(item.id, 'medium')}
+                    className="inline-flex items-center justify-center bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 rounded-xl px-5 h-10 text-[13px] font-bold transition-colors shadow-sm"
+                  >
+                    {item.suggestedAction || t.askForDetails}
+                  </button>
                 </div>
               </div>
             ))}

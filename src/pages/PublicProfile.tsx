@@ -3,8 +3,137 @@ import { useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { useLanguage } from "../contexts/LanguageContext";
+
+const translations = {
+  en: {
+    profileNotFound: "Profile Not Found",
+    loadingProfile: "Loading Profile...",
+    about: "About",
+    bestReasons: "Best reasons to reach out",
+    notAFitFor: "Not a fit for",
+    businessIntake: "Business Intake",
+    structuredRequest: "Structured Request",
+    selectPurpose: "Select the primary purpose of your inquiry to begin the intake process.",
+    intents: {
+      partnership: "Partnership",
+      media: "Media",
+      hiring: "Hiring",
+      advisory: "Advisory",
+      other: "Other"
+    },
+    for: "For",
+    closeWindow: "Close Window",
+    requestReceived: "Request Received",
+    requestReceivedMessage: (name: string) => `Your introduction has been structured and securely passed to ${name}. You may now close this window.`,
+    reasonForReachingOut: "Reason for reaching out",
+    selectPrimaryPurpose: "Select the primary purpose of your inquiry.",
+    whoYouAre: "Who you are",
+    basicDetailsToHelp: (name: string) => `Basic details to help ${name} understand your background.`,
+    fullName: "Full Name",
+    role: "Role",
+    company: "Company",
+    continueBtn: "Continue",
+    backBtn: "Back",
+    whyThisIsRelevant: "Why this is relevant",
+    brieflyExplainContext: (name: string) => `Briefly explain the context and why this matters specifically to ${name}.`,
+    provideContextPH: "Provide 2-3 sentences of context...",
+    whatHopingForNext: "What you're hoping for next",
+    whatIsImmediateAction: "What is the immediate action or outcome you are seeking?",
+    outcomes: {
+      shortReply: "A short reply",
+      introCall: "An intro call",
+      feedback: "Feedback",
+      partnership: "Partnership discussion",
+      sendMaterials: "Send materials"
+    },
+    contactForFollowUp: "Contact for follow-up",
+    howCanTheyReach: (name: string) => `How can ${name} reach you regarding this request?`,
+    email: "Email",
+    preferred: "(preferred)",
+    linkedinProfile: "LinkedIn Profile",
+    optional: "(optional)",
+    whatsapp: "WhatsApp/Telegram",
+    websiteLabel: "Company Website",
+    consentText: "I'm okay being contacted regarding this request. This information is only used for follow-up on this inquiry.",
+    reviewSummary: "Review Summary",
+    hereIsHowIntroduced: "Here is how your request will be introduced.",
+    from: "From",
+    intent: "Intent",
+    context: "Context",
+    desiredNextStep: "Desired Next Step",
+    submitting: "Submitting...",
+    confirmSubmit: "Confirm & Submit",
+    editDetails: "Edit Details",
+    poweredBy: "Powered by"
+  },
+  zh: {
+    profileNotFound: "未找到个人主页",
+    loadingProfile: "正在加载个人主页...",
+    about: "关于",
+    bestReasons: "最适合的联系原因",
+    notAFitFor: "不适合",
+    businessIntake: "商务合作请求",
+    structuredRequest: "结构化请求",
+    selectPurpose: "选择您咨询的主要目的以开始流程。",
+    intents: {
+      partnership: "合作伙伴关系",
+      media: "媒体咨询",
+      hiring: "招聘访谈",
+      advisory: "顾问咨询",
+      other: "其他"
+    },
+    for: "致",
+    closeWindow: "关闭窗口",
+    requestReceived: "请求已接收",
+    requestReceivedMessage: (name: string) => `您的介绍已经过结构化处理，并安全地传递给 ${name}。您现在可以关闭此窗口。`,
+    reasonForReachingOut: "联系原因",
+    selectPrimaryPurpose: "选择您咨询的主要目的。",
+    whoYouAre: "您的身份",
+    basicDetailsToHelp: (name: string) => `基本详情将帮助 ${name} 了解您的背景。`,
+    fullName: "全名",
+    role: "职位",
+    company: "公司",
+    continueBtn: "继续",
+    backBtn: "返回",
+    whyThisIsRelevant: "相关性说明",
+    brieflyExplainContext: (name: string) => `简要解释背景以及这对 ${name} 有何特定意义。`,
+    provideContextPH: "提供 2-3 句话的背景描述...",
+    whatHopingForNext: "期待的下一步",
+    whatIsImmediateAction: "您寻求的直接行动或结果是什么？",
+    outcomes: {
+      shortReply: "简短回复",
+      introCall: "简短介绍电话",
+      feedback: "意见反馈",
+      partnership: "合作讨论",
+      sendMaterials: "发送材料"
+    },
+    contactForFollowUp: "后续联系方式",
+    howCanTheyReach: (name: string) => `${name} 如何就此请求与您取得联系？`,
+    email: "邮箱地址",
+    preferred: "(首选)",
+    linkedinProfile: "LinkedIn 个人主页",
+    optional: "(可选)",
+    whatsapp: "WhatsApp/Telegram",
+    websiteLabel: "公司网站",
+    consentText: "我同意就此请求被联系。此信息仅用于此请求的后续跟进。",
+    reviewSummary: "审查摘要",
+    hereIsHowIntroduced: "以下是您的请求将被如何介绍的内容。",
+    from: "来自",
+    intent: "意图",
+    context: "上下文",
+    desiredNextStep: "期望的下一步",
+    submitting: "提交中...",
+    confirmSubmit: "确认并提交",
+    editDetails: "编辑详情",
+    poweredBy: "技术支持"
+  }
+};
 
 export default function PublicProfile() {
+  const { language } = useLanguage();
+  const t = translations[language as keyof typeof translations] || translations.en;
+
   const { slug } = useParams();
   const [profile, setProfile] = useState<any>(null);
   const [step, setStep] = useState(0);
@@ -50,7 +179,7 @@ export default function PublicProfile() {
       <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mb-6">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-slate-400"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
       </div>
-      <h2 className="text-2xl font-bold font-[family-name:var(--font-heading)] text-[#111] mb-2">Profile Not Found</h2>
+      <h2 className="text-2xl font-bold font-[family-name:var(--font-heading)] text-[#111] mb-2">{t.profileNotFound}</h2>
       <p className="max-w-md">{error}</p>
     </div>
   );
@@ -59,7 +188,7 @@ export default function PublicProfile() {
     <div className="min-h-screen bg-[#FAFAFA] flex items-center justify-center p-12 text-center text-slate-500 font-medium">
       <div className="flex flex-col items-center gap-4">
         <div className="w-8 h-8 border-2 border-slate-300 border-t-slate-800 rounded-full animate-spin"></div>
-        <p>Loading Profile...</p>
+        <p>{t.loadingProfile}</p>
       </div>
     </div>
   );
@@ -149,7 +278,7 @@ export default function PublicProfile() {
                    <div className="absolute top-0 right-0 w-32 h-32 bg-white/40 blur-2xl rounded-full translate-x-1/2 -translate-y-1/2 pointer-events-none"></div>
                    <div className="flex items-center gap-1.5 mb-3 relative z-10">
                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-slate-400"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-                     <span className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">About</span>
+                     <span className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">{t.about}</span>
                    </div>
                    <p className="text-[#111] font-medium text-[15px] leading-relaxed relative z-10">
                      {profile.generatedIntro}
@@ -164,7 +293,7 @@ export default function PublicProfile() {
                        <div className="w-7 h-7 rounded-full bg-green-50 flex items-center justify-center text-green-600 shrink-0">
                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
                        </div>
-                       <h3 className="font-bold text-[#111] text-[14px]">Best reasons to reach out</h3>
+                       <h3 className="font-bold text-[#111] text-[14px]">{t.bestReasons}</h3>
                      </div>
                      <ul className="space-y-3">
                        {["Strategic partnerships", "Media conversations", "Advisory requests", "Product collaboration", "Warm introductions"].map((reason, i) => (
@@ -182,7 +311,7 @@ export default function PublicProfile() {
                        <div className="w-7 h-7 rounded-full bg-red-50 flex items-center justify-center text-red-500 shrink-0">
                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
                        </div>
-                       <h3 className="font-bold text-[#111] text-[14px]">Not a fit for</h3>
+                       <h3 className="font-bold text-[#111] text-[14px]">{t.notAFitFor}</h3>
                      </div>
                      <ul className="space-y-3">
                        {["Cold sales outreach", "Generic recruiting spam", "Unrelated service pitches", "Mass outreach without context"].map((reason, i) => (
@@ -204,18 +333,18 @@ export default function PublicProfile() {
                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
                         </div>
                         <div>
-                          <h3 className="font-bold text-[#111] text-[16px] tracking-tight">Business Intake</h3>
-                          <p className="text-slate-500 text-[13px] font-medium">Structured Request</p>
+                          <h3 className="font-bold text-[#111] text-[16px] tracking-tight">{t.businessIntake}</h3>
+                          <p className="text-slate-500 text-[13px] font-medium">{t.structuredRequest}</p>
                         </div>
                      </div>
                    </div>
                    
                    <p className="text-[#111] font-medium text-[16px] sm:text-[18px] mb-6 leading-relaxed relative z-10 max-w-[400px]">
-                     Select the primary purpose of your inquiry to begin the intake process.
+                     {t.selectPurpose}
                    </p>
 
                    <div className="flex flex-wrap gap-2.5 relative z-10">
-                     {["Partnership", "Media", "Hiring", "Advisory", "Other"].map((intent, i) => (
+                     {Object.values(t.intents).map((intent, i) => (
                        <button
                          key={i}
                          onClick={() => {
@@ -251,8 +380,8 @@ export default function PublicProfile() {
                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
                    </div>
                    <div>
-                      <div className="text-[#111] font-bold text-[15px] tracking-tight">Business Intake</div>
-                      <div className="text-slate-500 text-[13px] font-medium">For {profile.displayName.split(" ")[0]}</div>
+                      <div className="text-[#111] font-bold text-[15px] tracking-tight">{t.businessIntake}</div>
+                      <div className="text-slate-500 text-[13px] font-medium">{t.for} {profile.displayName.split(" ")[0]}</div>
                    </div>
                  </div>
                  {!submitted && (
@@ -277,7 +406,7 @@ export default function PublicProfile() {
                         <div className="w-16 h-16 rounded-full bg-green-50 text-green-600 flex items-center justify-center mb-6 ring-8 ring-green-50/50">
                           <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
                         </div>
-                        <h3 className="font-bold text-[#111] text-[22px] mb-3">Request Received</h3>
+                        <h3 className="font-bold text-[#111] text-[22px] mb-3">{t.requestReceived}</h3>
                         <p className="text-[15px] text-slate-500 font-medium leading-relaxed max-w-[300px]">
                           Your introduction has been structured and securely passed to {profile.displayName.split(" ")[0]}. You may now close this window.
                         </p>
@@ -289,8 +418,8 @@ export default function PublicProfile() {
                      <>
                         {step === 1 && (
                             <div className="animate-in fade-in slide-in-from-right-4 duration-300 h-full flex flex-col">
-                               <h3 className="text-lg font-bold text-[#111] mb-2">Reason for reaching out</h3>
-                               <p className="text-sm text-slate-500 mb-6">Select the primary purpose of your inquiry.</p>
+                               <h3 className="text-lg font-bold text-[#111] mb-2">{t.reasonForReachingOut}</h3>
+                               <p className="text-sm text-slate-500 mb-6">{t.selectPrimaryPurpose}</p>
                                <div className="flex flex-col gap-3">
                                    {["Partnership", "Media", "Hiring", "Advisory", "Other"].map(intent => (
                                        <button 
@@ -307,51 +436,51 @@ export default function PublicProfile() {
 
                         {step === 2 && (
                             <div className="animate-in fade-in slide-in-from-right-4 duration-300 flex flex-col h-full flex-1">
-                               <h3 className="text-lg font-bold text-[#111] mb-2">Who you are</h3>
+                               <h3 className="text-lg font-bold text-[#111] mb-2">{t.whoYouAre}</h3>
                                <p className="text-sm text-slate-500 mb-6">Basic details to help {profile.displayName.split(" ")[0]} understand your background.</p>
                                <div className="space-y-4">
                                   <div>
-                                     <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 block">Full Name</label>
+                                     <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 block">{t.fullName}</label>
                                      <Input autoFocus value={visitor.visitorName} onChange={e => updateV("visitorName", e.target.value)} className="h-12 bg-slate-50 border-slate-200 rounded-xl px-4 text-[15px] focus:bg-white" />
                                   </div>
                                   <div className="grid grid-cols-2 gap-4">
                                       <div>
-                                         <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 block">Role</label>
+                                         <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 block">{t.role}</label>
                                          <Input value={visitor.visitorBackground} onChange={e => updateV("visitorBackground", e.target.value)} className="h-12 bg-slate-50 border-slate-200 rounded-xl px-4 text-[15px] focus:bg-white" />
                                       </div>
                                       <div>
-                                         <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 block">Company</label>
+                                         <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 block">{t.company}</label>
                                          <Input value={visitor.visitorCompany} onChange={e => updateV("visitorCompany", e.target.value)} className="h-12 bg-slate-50 border-slate-200 rounded-xl px-4 text-[15px] focus:bg-white" />
                                       </div>
                                   </div>
                                </div>
                                <div className="mt-auto pt-8">
-                                  <Button onClick={() => setStep(3)} disabled={!visitor.visitorName} className="w-full h-12 rounded-xl bg-[#111] hover:bg-slate-800 text-white font-bold text-[15px]">Continue</Button>
-                                  <button onClick={() => setStep(1)} className="w-full text-center mt-4 text-sm font-medium text-slate-500 hover:text-slate-800">Back</button>
+                                  <Button onClick={() => setStep(3)} disabled={!visitor.visitorName} className="w-full h-12 rounded-xl bg-[#111] hover:bg-slate-800 text-white font-bold text-[15px]">{t.continueBtn}</Button>
+                                  <button onClick={() => setStep(1)} className="w-full text-center mt-4 text-sm font-medium text-slate-500 hover:text-slate-800">{t.backBtn}</button>
                                </div>
                             </div>
                         )}
 
                         {step === 3 && (
                             <div className="animate-in fade-in slide-in-from-right-4 duration-300 flex flex-col h-full flex-1">
-                               <h3 className="text-lg font-bold text-[#111] mb-2">Why this is relevant</h3>
-                               <p className="text-sm text-slate-500 mb-6">Briefly explain the context and why this matters specifically to {profile.displayName.split(" ")[0]}.</p>
+                               <h3 className="text-lg font-bold text-[#111] mb-2">{t.whyThisIsRelevant}</h3>
+                               <p className="text-sm text-slate-500 mb-6">{t.brieflyExplainContext(profile.displayName.split(" ")[0])}</p>
                                <div className="flex-1 min-h-[150px]">
-                                  <Textarea autoFocus value={visitor.visitorReason} onChange={e => updateV("visitorReason", e.target.value)} placeholder="Provide 2-3 sentences of context..." className="w-full h-full min-h-[150px] bg-slate-50 border-slate-200 rounded-xl p-4 text-[15px] focus:bg-white resize-none" />
+                                  <Textarea autoFocus value={visitor.visitorReason} onChange={e => updateV("visitorReason", e.target.value)} placeholder={t.provideContextPH} className="w-full h-full min-h-[150px] bg-slate-50 border-slate-200 rounded-xl p-4 text-[15px] focus:bg-white resize-none" />
                                </div>
                                <div className="mt-8 pt-4">
-                                  <Button onClick={() => setStep(4)} disabled={!visitor.visitorReason} className="w-full h-12 rounded-xl bg-[#111] hover:bg-slate-800 text-white font-bold text-[15px]">Continue</Button>
-                                  <button onClick={() => setStep(2)} className="w-full text-center mt-4 text-sm font-medium text-slate-500 hover:text-slate-800">Back</button>
+                                  <Button onClick={() => setStep(4)} disabled={!visitor.visitorReason} className="w-full h-12 rounded-xl bg-[#111] hover:bg-slate-800 text-white font-bold text-[15px]">{t.continueBtn}</Button>
+                                  <button onClick={() => setStep(2)} className="w-full text-center mt-4 text-sm font-medium text-slate-500 hover:text-slate-800">{t.backBtn}</button>
                                </div>
                             </div>
                         )}
 
                         {step === 4 && (
                             <div className="animate-in fade-in slide-in-from-right-4 duration-300 flex flex-col h-full flex-1">
-                               <h3 className="text-lg font-bold text-[#111] mb-2">What you're hoping for next</h3>
-                               <p className="text-sm text-slate-500 mb-6">What is the immediate action or outcome you are seeking?</p>
+                               <h3 className="text-lg font-bold text-[#111] mb-2">{t.whatHopingForNext}</h3>
+                               <p className="text-sm text-slate-500 mb-6">{t.whatIsImmediateAction}</p>
                                <div className="flex flex-col gap-3">
-                                   {["A short reply", "An intro call", "Feedback", "Partnership discussion", "Send materials"].map(outcome => (
+                                   {Object.values(t.outcomes).map(outcome => (
                                        <button 
                                           key={outcome} 
                                           onClick={() => { updateV("requestedNextStep", outcome); setStep(5); }}
@@ -362,31 +491,31 @@ export default function PublicProfile() {
                                    ))}
                                </div>
                                <div className="mt-auto pt-8">
-                                  <button onClick={() => setStep(3)} className="w-full text-center mt-4 text-sm font-medium text-slate-500 hover:text-slate-800">Back</button>
+                                  <button onClick={() => setStep(3)} className="w-full text-center mt-4 text-sm font-medium text-slate-500 hover:text-slate-800">{t.backBtn}</button>
                                </div>
                             </div>
                         )}
 
                         {step === 5 && (
                             <div className="animate-in fade-in slide-in-from-right-4 duration-300 flex flex-col h-full flex-1">
-                               <h3 className="text-lg font-bold text-[#111] mb-2">Contact for follow-up</h3>
-                               <p className="text-sm text-slate-500 mb-6">How can {profile.displayName.split(" ")[0]} reach you regarding this request?</p>
+                               <h3 className="text-lg font-bold text-[#111] mb-2">{t.contactForFollowUp}</h3>
+                               <p className="text-sm text-slate-500 mb-6">{t.howCanTheyReach(profile.displayName.split(" ")[0])}</p>
                                <div className="space-y-4">
                                   <div>
-                                     <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 block">Email <span className="text-slate-400 lowercase normal-case ml-1">(preferred)</span></label>
+                                     <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 block">{t.email} <span className="text-slate-400 lowercase normal-case ml-1">{t.preferred}</span></label>
                                      <Input type="email" autoFocus value={visitor.email} onChange={e => updateV("email", e.target.value)} className="h-12 bg-slate-50 border-slate-200 rounded-xl px-4 text-[15px] focus:bg-white" placeholder="you@company.com" />
                                   </div>
                                   <div>
-                                     <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 block">LinkedIn Profile <span className="text-slate-400 lowercase normal-case ml-1">(optional)</span></label>
+                                     <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 block">{t.linkedinProfile} <span className="text-slate-400 lowercase normal-case ml-1">{t.optional}</span></label>
                                      <Input value={visitor.linkedin} onChange={e => updateV("linkedin", e.target.value)} className="h-12 bg-slate-50 border-slate-200 rounded-xl px-4 text-[15px] focus:bg-white" placeholder="linkedin.com/in/..." />
                                   </div>
                                   <div className="grid grid-cols-2 gap-4">
                                     <div>
-                                       <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 block">WhatsApp/Telegram <span className="text-slate-400 lowercase normal-case ml-1">(optional)</span></label>
+                                       <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 block">{t.whatsapp} <span className="text-slate-400 lowercase normal-case ml-1">{t.optional}</span></label>
                                        <Input value={visitor.whatsapp} onChange={e => updateV("whatsapp", e.target.value)} className="h-12 bg-slate-50 border-slate-200 rounded-xl px-4 text-[15px] focus:bg-white" placeholder="+1..." />
                                     </div>
                                     <div>
-                                       <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 block">Company Website <span className="text-slate-400 lowercase normal-case ml-1">(optional)</span></label>
+                                       <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 block">{t.websiteLabel} <span className="text-slate-400 lowercase normal-case ml-1">{t.optional}</span></label>
                                        <Input value={visitor.website} onChange={e => updateV("website", e.target.value)} className="h-12 bg-slate-50 border-slate-200 rounded-xl px-4 text-[15px] focus:bg-white" placeholder="acme.com" />
                                     </div>
                                   </div>
@@ -399,26 +528,26 @@ export default function PublicProfile() {
                                         {visitor.consentToContact && <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>}
                                      </button>
                                      <div className="text-[13px] text-slate-600 font-medium leading-snug">
-                                        I'm okay being contacted regarding this request. This information is only used for follow-up on this inquiry.
+                                        {t.consentText}
                                      </div>
                                   </div>
                                </div>
 
                                <div className="mt-auto pt-8">
-                                  <Button onClick={() => setStep(6)} disabled={!(visitor.email || visitor.linkedin || visitor.whatsapp || visitor.website) || !visitor.consentToContact} className="w-full h-12 rounded-xl bg-[#111] hover:bg-slate-800 text-white font-bold text-[15px]">Continue</Button>
-                                  <button onClick={() => setStep(4)} className="w-full text-center mt-4 text-sm font-medium text-slate-500 hover:text-slate-800">Back</button>
+                                  <Button onClick={() => setStep(6)} disabled={!(visitor.email || visitor.linkedin || visitor.whatsapp || visitor.website) || !visitor.consentToContact} className="w-full h-12 rounded-xl bg-[#111] hover:bg-slate-800 text-white font-bold text-[15px]">{t.continueBtn}</Button>
+                                  <button onClick={() => setStep(4)} className="w-full text-center mt-4 text-sm font-medium text-slate-500 hover:text-slate-800">{t.backBtn}</button>
                                </div>
                             </div>
                         )}
 
                         {step === 6 && (
                             <div className="animate-in fade-in slide-in-from-right-4 duration-300 flex flex-col h-full flex-1">
-                               <h3 className="text-lg font-bold text-[#111] mb-2">Review Summary</h3>
-                               <p className="text-sm text-slate-500 mb-6">Here is how your request will be introduced.</p>
+                               <h3 className="text-lg font-bold text-[#111] mb-2">{t.reviewSummary}</h3>
+                               <p className="text-sm text-slate-500 mb-6">{t.hereIsHowIntroduced}</p>
                                
                                <div className="flex-1 bg-slate-50 border border-slate-200 rounded-xl p-5 overflow-y-auto space-y-4 shadow-inner">
                                   <div>
-                                     <div className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">From</div>
+                                     <div className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">{t.from}</div>
                                      <div className="text-[14px] text-[#111] font-medium">{visitor.visitorName} {visitor.visitorBackground && `· ${visitor.visitorBackground}`} {visitor.visitorCompany && `· ${visitor.visitorCompany}`}</div>
                                      <div className="text-[13px] text-slate-500 mt-1">
                                         {[visitor.email, visitor.linkedin, visitor.whatsapp, visitor.website].filter(Boolean).join(" · ")}
@@ -426,26 +555,26 @@ export default function PublicProfile() {
                                   </div>
                                   <div className="h-px w-full bg-slate-200"></div>
                                   <div>
-                                     <div className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Intent</div>
+                                     <div className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">{t.intent}</div>
                                      <div className="text-[14px] text-[#111] font-medium">{visitor.visitorIntentCategory}</div>
                                   </div>
                                   <div className="h-px w-full bg-slate-200"></div>
                                   <div>
-                                     <div className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Context</div>
+                                     <div className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">{t.context}</div>
                                      <div className="text-[14px] text-[#111] leading-relaxed whitespace-pre-wrap">{visitor.visitorReason}</div>
                                   </div>
                                   <div className="h-px w-full bg-slate-200"></div>
                                   <div>
-                                     <div className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Desired Next Step</div>
+                                     <div className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">{t.desiredNextStep}</div>
                                      <div className="text-[14px] text-[#111] font-medium">{visitor.requestedNextStep}</div>
                                   </div>
                                </div>
 
                                <div className="mt-6 pt-2 shrink-0">
                                   <Button onClick={handleSubmit} disabled={loading} className="w-full h-12 rounded-xl bg-[#111] hover:bg-slate-800 text-white font-bold text-[15px]">
-                                     {loading ? "Submitting..." : "Confirm & Submit"}
+                                     {loading ? t.submitting : t.confirmSubmit}
                                   </Button>
-                                  <button onClick={() => setStep(5)} className="w-full text-center mt-4 text-sm font-medium text-slate-500 hover:text-slate-800">Edit Details</button>
+                                  <button onClick={() => setStep(5)} className="w-full text-center mt-4 text-sm font-medium text-slate-500 hover:text-slate-800">{t.editDetails}</button>
                                </div>
                             </div>
                         )}
@@ -459,7 +588,7 @@ export default function PublicProfile() {
         {/* Footer Brand */}
         <div className="mt-8 mb-10 text-center relative z-10 w-full flex justify-center pb-8">
             <a href="/" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 bg-white/80 px-4 py-2 rounded-full border border-white hover:bg-white transition-colors shadow-sm">
-               <span className="text-slate-400 font-medium text-[12px]">Powered by</span>
+               <span className="text-slate-400 font-medium text-[12px]">{t.poweredBy}</span>
                <div className="font-bold text-[14px] tracking-tight flex items-center gap-1.5 font-[family-name:var(--font-heading)] text-[#111]">
                  <div className="w-4 h-4 bg-[#111] rounded-full flex items-center justify-center text-white text-[8px]">L</div>
                  Liais
