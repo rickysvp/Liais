@@ -5,7 +5,7 @@
 - Vercel Hobby for frontend and serverless API.
 - Supabase Free for Postgres and Auth.
 - Stripe Billing for subscriptions, one-time credit packs, and Customer Portal.
-- Gemini API for paid AI screening only.
+- LLM API for paid AI screening only.
 
 ## Environment Variables
 
@@ -15,7 +15,9 @@ Set these in Vercel:
 - `SUPABASE_URL`
 - `SUPABASE_ANON_KEY`
 - `SUPABASE_SERVICE_ROLE_KEY`
-- `GEMINI_API_KEY`
+- `DEEPSEEK_API_KEY`
+- `DEEPSEEK_BASE_URL` (optional, default `https://api.deepseek.com`)
+- `DEEPSEEK_CHAT_MODEL` (optional, default `deepseek-chat`)
 - `STRIPE_SECRET_KEY`
 - `STRIPE_WEBHOOK_SECRET`
 - `STRIPE_PRICE_STARTER_MONTHLY`
@@ -68,4 +70,3 @@ After deployment:
 7. Submit visitor intake again and verify AI screening consumes credits.
 8. Open inbox and update a conversation status.
 9. Open Billing Portal.
-

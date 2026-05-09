@@ -7,13 +7,15 @@ import "dotenv/config";
 import { fileURLToPath } from 'url';
 import { prisma } from "./server/lib/db";
 import { createApp } from "./server/app";
+import { validateRuntimeEnvOrThrow } from "./server/lib/env";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 async function startServer() {
+  validateRuntimeEnvOrThrow();
   const app = createApp();
-  const PORT = 3000;
+  const PORT = parseInt(process.env.PORT || "3000", 10);
 
   // === VITE / STATIC SERVING ===
   if (process.env.NODE_ENV !== "production") {

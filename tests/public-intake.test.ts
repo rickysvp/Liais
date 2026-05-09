@@ -4,7 +4,7 @@ import request from "supertest";
 import { createApp } from "../server/app";
 
 vi.mock("../server/lib/ai", () => ({
-  ai: { models: { generateContent: vi.fn() } },
+  generateJsonObject: vi.fn(),
   isAIConfigured: vi.fn().mockReturnValue(false),
 }));
 
@@ -79,5 +79,20 @@ describe("public profile and intake", () => {
       });
 
     expect(res.status).toBe(400);
+  });
+
+  it("does not expose legacy public intake by internal profile id", async () => {
+    const app = createApp();
+
+    const res = await request(app)
+      .post("/api/intake/profile-1")
+      .send({
+        visitorName: "Partner",
+        visitorReason: "I have a relevant distribution partnership idea.",
+        contactInfo: "partner@example.com",
+        consentToContact: true,
+      });
+
+    expect(res.status).toBe(404);
   });
 });

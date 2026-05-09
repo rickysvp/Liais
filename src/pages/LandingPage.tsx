@@ -61,13 +61,10 @@ export default function LandingPage() {
 
       {/* Navigation */}
       <nav className="w-full flex items-center justify-between p-6 lg:px-12 max-w-[1400px] mx-auto z-50">
-        <div className="font-[family-name:var(--font-heading)] font-bold text-2xl tracking-tighter flex items-center space-x-2">
-           <div className="w-8 h-8 bg-[#111] rounded-full flex items-center justify-center text-white text-sm font-bold shadow-sm">L</div>
-           <span className="text-[#111] tracking-tight">Liais</span>
-        </div>
+        <img src="/img/logo.png" alt="Liais" className="h-11 w-auto rounded-xl" />
         <div className="flex items-center gap-4 lg:gap-6">
           <Link to="/pricing" className="text-[#4A4A46] font-semibold hover:text-[#111] transition-colors hidden sm:block">{t.pricing}</Link>
-          <Link to="/dashboard" className="text-[#4A4A46] font-semibold hover:text-[#111] transition-colors hidden sm:block">{t.logIn}</Link>
+          <Link to="/onboarding" className="text-[#4A4A46] font-semibold hover:text-[#111] transition-colors hidden sm:block">{t.logIn}</Link>
           <Link 
             to="/onboarding" 
             className="rounded-full bg-[#111] text-white px-6 py-3.5 font-bold hover:bg-slate-800 transition-transform hover:scale-[1.02] active:scale-95 text-sm lg:text-base shadow-sm"
@@ -118,7 +115,7 @@ export default function LandingPage() {
               {t.freeText}
             </div>
             <div className="hidden sm:block w-1.5 h-1.5 rounded-full bg-slate-300"></div>
-            <Link to="/u/demo" className="text-[#111] font-bold text-[15px] underline underline-offset-4 decoration-slate-300 hover:decoration-[#111] transition-colors flex items-center gap-1.5">
+            <Link to="/pricing" className="text-[#111] font-bold text-[15px] underline underline-offset-4 decoration-slate-300 hover:decoration-[#111] transition-colors flex items-center gap-1.5">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
               {t.watchDemo}
             </Link>

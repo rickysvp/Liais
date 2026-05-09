@@ -5,7 +5,27 @@ import { authMiddleware, profileMiddleware } from "../lib/auth";
 
 export const profileRouter = Router();
 
-profileRouter.post("/profile/publish", async (req, res) => {
+function toBaseSlug(displayName: string): string {
+  const normalized = displayName.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+  return normalized || "profile";
+}
+
+async function resolveUniqueSlug(userId: string, displayName: string): Promise<string> {
+  const baseSlug = toBaseSlug(displayName);
+  for (let attempt = 0; attempt < 50; attempt++) {
+    const candidate = attempt === 0 ? baseSlug : `${baseSlug}-${attempt + 1}`;
+    const owner = await prisma.profile.findUnique({
+      where: { slug: candidate },
+      select: { userId: true },
+    });
+    if (!owner || owner.userId === userId) {
+      return candidate;
+    }
+  }
+  throw new Error("Unable to allocate unique profile slug");
+}
+
+profileRouter.post("/profile/publish", authMiddleware, async (req, res) => {
   try {
     const parsed = profilePublishSchema.safeParse(req.body);
     if (!parsed.success) {
@@ -13,18 +33,34 @@ profileRouter.post("/profile/publish", async (req, res) => {
       return;
     }
 
-    const { userId, payload, generated } = parsed.data;
+    if (!req.userId) {
+      res.status(401).json({ error: "Authentication required" });
+      return;
+    }
+
+    const { payload, generated, accountEmail } = parsed.data;
+    const userId = req.userId;
     let user = await prisma.user.findUnique({ where: { id: userId } });
     if (!user) {
+      const resolvedEmail = req.userEmail || accountEmail;
+      if (!resolvedEmail) {
+        res.status(400).json({ error: "A verified account email is required before publishing." });
+        return;
+      }
       user = await prisma.user.create({
         data: {
           id: userId,
-          email: `${userId}@example.com`,
+          email: resolvedEmail,
         }
+      });
+    } else if (!user.email && (req.userEmail || accountEmail)) {
+      user = await prisma.user.update({
+        where: { id: user.id },
+        data: { email: req.userEmail || accountEmail || undefined },
       });
     }
 
-    const slug = payload.displayName.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+    let slug = await resolveUniqueSlug(user.id, payload.displayName);
     const profileData = {
       displayName: payload.displayName,
       headline: payload.headline,
@@ -48,20 +84,39 @@ profileRouter.post("/profile/publish", async (req, res) => {
       isPublished: true,
     };
 
-    const profile = await prisma.profile.upsert({
-      where: { userId: user.id },
-      update: {
-        ...profileData,
-        slug,
-      },
-      create: {
-        userId: user.id,
-        slug,
-        ...profileData,
+    let profile;
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        profile = await prisma.profile.upsert({
+          where: { userId: user.id },
+          update: {
+            ...profileData,
+            slug,
+          },
+          create: {
+            userId: user.id,
+            slug,
+            ...profileData,
+          }
+        });
+        break;
+      } catch (error: any) {
+        if (error?.code === "P2002" && attempt < 2) {
+          slug = await resolveUniqueSlug(user.id, `${payload.displayName}-${Date.now().toString().slice(-4)}`);
+          continue;
+        }
+        throw error;
       }
-    });
+    }
 
-    res.json(profile);
+    if (!profile) {
+      throw new Error("Failed to save profile");
+    }
+
+    res.json({
+      ...profile,
+      profileUrl: `${process.env.APP_URL || process.env.FRONTEND_URL || "http://localhost:3000"}/u/${profile.slug}`,
+    });
   } catch (e: any) {
     console.error("[Profile Publish Error]", e.message);
     res.status(500).json({ error: "Failed to publish profile" });

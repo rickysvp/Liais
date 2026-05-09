@@ -1,8 +1,17 @@
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import request from "supertest";
 
 import { createApp } from "../server/app";
 import { prisma } from "../server/lib/db";
+const getUser = vi.fn();
+process.env.SUPABASE_URL = "https://example.supabase.co";
+process.env.SUPABASE_SERVICE_ROLE_KEY = "service-role-key";
+
+vi.mock("@supabase/supabase-js", () => ({
+  createClient: vi.fn(() => ({
+    auth: { getUser },
+  })),
+}));
 
 vi.mock("../server/lib/db", () => ({
   prisma: {
@@ -22,6 +31,11 @@ vi.mock("../server/lib/db", () => ({
 }));
 
 describe("owner inbox authorization", () => {
+  beforeEach(() => {
+    getUser.mockReset();
+    getUser.mockResolvedValue({ data: { user: { id: "user-1", email: "owner@example.com" } }, error: null });
+  });
+
   it("requires authentication to list owner inbox conversations", async () => {
     const app = createApp();
 
@@ -35,7 +49,7 @@ describe("owner inbox authorization", () => {
 
     const res = await request(app)
       .get("/api/inbox")
-      .set("x-user-id", "user-1");
+      .set("Authorization", "Bearer token-1");
 
     expect(res.status).toBe(200);
     expect(prisma.visitorConversation.findMany).toHaveBeenCalledWith(

@@ -6,7 +6,7 @@
 
 **Architecture:** Keep the current Vite + React + Express + Prisma shape, but introduce explicit product boundaries: authenticated owner workspace, public visitor intake, AI screening pipeline, decision inbox, and billing/usage controls. Replace demo identity, mock data, global inbox reads, and hardcoded operational assumptions with owner-scoped APIs and durable product flows.
 
-**Tech Stack:** React 19, Vite 6, Express 4, Prisma 5, SQLite for local development, production Postgres recommended, Zod, Gemini API, Vitest/Supertest, Helmet, express-rate-limit, future Stripe/Auth provider integration.
+**Tech Stack:** React 19, Vite 6, Express 4, Prisma 5, SQLite for local development, production Postgres recommended, Zod, LLM provider API, Vitest/Supertest, Helmet, express-rate-limit, future Stripe/Auth provider integration.
 
 ---
 
@@ -20,7 +20,7 @@ Recommended MVP stack:
 - **Database/Auth/Storage:** Supabase Free for Postgres, Auth, and small file storage. Current official limits include 2 free projects, 500 MB database size, 50,000 monthly active users, 1 GB storage, and pausing after inactivity.
 - **Email:** Resend Free for launch notifications and owner alerts. Current official limits include 3,000 emails/month and 100 emails/day.
 - **Rate limit/cache:** Upstash Redis Free only if in-memory rate limiting is insufficient. Current official limits include 256 MB data and 500k monthly commands.
-- **AI:** Use the existing Gemini key path initially, but meter every AI call internally. Prefer one AI call per visitor intake, cache generated profile content, and avoid background AI jobs during MVP.
+- **AI:** Use the existing LLM provider key path initially, but meter every AI call internally. Prefer one AI call per visitor intake, cache generated profile content, and avoid background AI jobs during MVP.
 - **Payments:** Implement Stripe immediately. Use Stripe Billing + Checkout Sessions for subscriptions, Stripe Checkout Sessions for one-time credit packs, and Stripe Customer Portal for self-service plan/payment changes.
 
 MVP cost guardrails:
@@ -237,7 +237,7 @@ Before AI, classify obvious spam, missing context, missing contact, and boundary
 
 - [x] **Step 3: Validate model JSON**
 
-If Gemini returns malformed JSON, store a safe fallback plus an `aiError`/`needsReview` flag.
+If LLM provider returns malformed JSON, store a safe fallback plus an `aiError`/`needsReview` flag.
 
 - [ ] **Step 4: Store screening rationale**
 
@@ -353,7 +353,7 @@ Handle `checkout.session.completed`, `customer.subscription.created`, `customer.
 
 - [x] **Step 5: Enforce credits before AI calls**
 
-Before every paid AI operation, reserve or check available credits. If unavailable, return an upgrade/credit-pack response before calling Gemini.
+Before every paid AI operation, reserve or check available credits. If unavailable, return an upgrade/credit-pack response before calling LLM provider.
 
 - [x] **Step 6: Add Customer Portal**
 
@@ -427,7 +427,7 @@ Generate Prisma migrations and stop relying on committed `.db` state.
 
 - [x] **Step 3: Add free-tier environment matrix**
 
-Document required env vars: Supabase URL/anon key/service key, database URL, Gemini key, app URL, frontend URL, Stripe secret key, Stripe webhook secret, Stripe price IDs, optional Resend key, optional Upstash Redis URL/token.
+Document required env vars: Supabase URL/anon key/service key, database URL, LLM provider key, app URL, frontend URL, Stripe secret key, Stripe webhook secret, Stripe price IDs, optional Resend key, optional Upstash Redis URL/token.
 
 - [ ] **Step 4: Add zero-cost observability**
 

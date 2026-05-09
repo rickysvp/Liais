@@ -13,9 +13,11 @@ function createPrismaMock() {
     stripeWebhookEvent: {
       findUnique: vi.fn().mockResolvedValue(null),
       create: vi.fn().mockResolvedValue({}),
+      delete: vi.fn().mockResolvedValue({}),
     },
     subscription: {
       upsert: vi.fn().mockResolvedValue({}),
+      findFirst: vi.fn().mockResolvedValue(null),
       updateMany: vi.fn().mockResolvedValue({}),
     },
     usageLedger: {
@@ -43,7 +45,7 @@ describe("Stripe billing fulfillment", () => {
     expect(getCreditPackCredits("price_unknown")).toBe(0);
   });
 
-  it("credits a one-time credit pack checkout once", async () => {
+  it("records a one-time credit pack only in the ledger to avoid double counting", async () => {
     const prisma = createPrismaMock();
 
     await fulfillCheckoutSession(prisma as any, {
@@ -56,12 +58,7 @@ describe("Stripe billing fulfillment", () => {
       },
     } as any);
 
-    expect(prisma.subscription.upsert).toHaveBeenCalledWith(
-      expect.objectContaining({
-        where: { userId: "user-1" },
-        update: { purchasedCredits: { increment: 25 } },
-      })
-    );
+    expect(prisma.subscription.upsert).not.toHaveBeenCalled();
     expect(prisma.usageLedger.create).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({
@@ -110,5 +107,36 @@ describe("Stripe billing fulfillment", () => {
 
     expect(handler).not.toHaveBeenCalled();
     expect(prisma.stripeWebhookEvent.create).not.toHaveBeenCalled();
+  });
+
+  it("claims the Stripe webhook event before running fulfillment", async () => {
+    const prisma = createPrismaMock();
+    const handler = vi.fn();
+
+    await processStripeEventOnce(prisma as any, { id: "evt_2", type: "checkout.session.completed" } as any, handler);
+
+    expect(prisma.stripeWebhookEvent.create).toHaveBeenCalledBefore(handler);
+  });
+
+  it("skips fulfillment when claiming the Stripe webhook event hits a unique conflict", async () => {
+    const prisma = createPrismaMock();
+    prisma.stripeWebhookEvent.create.mockRejectedValueOnce({ code: "P2002" });
+    const handler = vi.fn();
+
+    const processed = await processStripeEventOnce(prisma as any, { id: "evt_3", type: "checkout.session.completed" } as any, handler);
+
+    expect(processed).toBe(false);
+    expect(handler).not.toHaveBeenCalled();
+  });
+
+  it("releases the Stripe webhook claim when fulfillment fails", async () => {
+    const prisma = createPrismaMock();
+    const handler = vi.fn().mockRejectedValueOnce(new Error("boom"));
+
+    await expect(
+      processStripeEventOnce(prisma as any, { id: "evt_4", type: "checkout.session.completed" } as any, handler)
+    ).rejects.toThrow("boom");
+
+    expect(prisma.stripeWebhookEvent.delete).toHaveBeenCalledWith({ where: { id: "evt_4" } });
   });
 });

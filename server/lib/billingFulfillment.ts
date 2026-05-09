@@ -4,6 +4,7 @@ type PrismaLike = {
   stripeWebhookEvent: {
     findUnique(args: any): Promise<any>;
     create(args: any): Promise<any>;
+    delete(args: any): Promise<any>;
   };
   subscription: {
     upsert(args: any): Promise<any>;
@@ -68,18 +69,6 @@ export async function fulfillCheckoutSession(
 
     if (purchasedCredits <= 0) return;
 
-    await prisma.subscription.upsert({
-      where: { userId },
-      update: { purchasedCredits: { increment: purchasedCredits } },
-      create: {
-        userId,
-        planName: "Free",
-        status: "inactive",
-        monthlyCredits: 0,
-        purchasedCredits,
-      },
-    });
-
     await prisma.usageLedger.create({
       data: {
         userId,
@@ -131,13 +120,23 @@ export async function processStripeEventOnce(
   const existing = await prisma.stripeWebhookEvent.findUnique({ where: { id: event.id } });
   if (existing) return false;
 
-  await handler();
-  await prisma.stripeWebhookEvent.create({
-    data: {
-      id: event.id,
-      type: event.type,
-    },
-  });
+  try {
+    await prisma.stripeWebhookEvent.create({
+      data: {
+        id: event.id,
+        type: event.type,
+      },
+    });
+  } catch (e: any) {
+    if (e?.code === "P2002") return false;
+    throw e;
+  }
+  try {
+    await handler();
+  } catch (e) {
+    await prisma.stripeWebhookEvent.delete({ where: { id: event.id } });
+    throw e;
+  }
 
   return true;
 }

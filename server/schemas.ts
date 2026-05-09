@@ -44,7 +44,8 @@ export const onboardingDraftSchema = z.object({
 });
 
 export const profilePublishSchema = z.object({
-  userId: z.string().min(1),
+  userId: z.string().min(1).optional(),
+  accountEmail: z.string().email().max(320).optional(),
   payload: z.object({
     displayName: z.string().min(1).max(100),
     headline: z.string().max(200).optional(),

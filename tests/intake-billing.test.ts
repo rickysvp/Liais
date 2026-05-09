@@ -2,20 +2,16 @@ import { describe, expect, it, vi } from "vitest";
 import request from "supertest";
 
 import { createApp } from "../server/app";
-import { ai } from "../server/lib/ai";
+import { generateJsonObject } from "../server/lib/ai";
 
 vi.mock("../server/lib/ai", () => ({
-  ai: {
-    models: {
-      generateContent: vi.fn().mockResolvedValue({
-        text: JSON.stringify({
-          summaryText: "High-signal partnership request",
-          qualificationLevel: "high fit",
-          suggestedAction: "Review now",
-        }),
-      }),
-    },
-  },
+  generateJsonObject: vi.fn().mockResolvedValue(
+    JSON.stringify({
+      summaryText: "High-signal partnership request",
+      qualificationLevel: "high fit",
+      suggestedAction: "Review now",
+    })
+  ),
   isAIConfigured: vi.fn().mockReturnValue(true),
 }));
 
@@ -25,6 +21,7 @@ vi.mock("../server/lib/db", () => ({
       findUnique: vi.fn().mockResolvedValue({
         id: "profile-1",
         userId: "user-1",
+        isPublished: true,
       }),
     },
     subscription: {
@@ -49,7 +46,7 @@ describe("public intake billing gate", () => {
     const app = createApp();
 
     const res = await request(app)
-      .post("/api/intake/profile-1")
+      .post("/api/p/ricky/intake")
       .send({
         visitorName: "Buyer",
         visitorReason: "I want to discuss a partnership.",
@@ -58,7 +55,7 @@ describe("public intake billing gate", () => {
       });
 
     expect(res.status).toBe(200);
-    expect(ai.models.generateContent).not.toHaveBeenCalled();
+    expect(generateJsonObject).not.toHaveBeenCalled();
     expect(res.body.summaryText).toBe("AI screening requires an active plan or credits.");
   });
 });

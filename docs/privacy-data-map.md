@@ -14,7 +14,7 @@
 
 - **Supabase:** application database, auth identity, and storage if enabled later.
 - **Stripe:** owner billing identity, checkout/portal sessions, subscriptions, payments, credit-pack purchases.
-- **Gemini:** profile context, owner boundaries needed for screening, and visitor intake content only when the owner has an active plan or credits.
+- **LLM Provider:** profile context, owner boundaries needed for screening, and visitor intake content only when the owner has an active plan or credits.
 - **Vercel:** application hosting logs and serverless request metadata.
 
 ## MVP Retention
@@ -27,5 +27,4 @@
 
 - Do not log full visitor transcripts by default.
 - Log request ids, route names, AI failures, Stripe event ids, and high-level usage outcomes.
-- Never log Stripe secrets, Supabase service keys, Gemini keys, or raw authorization headers.
-
+- Never log Stripe secrets, Supabase service keys, LLM keys, or raw authorization headers.

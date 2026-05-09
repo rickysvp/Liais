@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { prisma } from "../lib/db";
-import { ai, isAIConfigured } from "../lib/ai";
+import { generateJsonObject, isAIConfigured } from "../lib/ai";
 import { visitorIntakeSchema } from "../schemas";
 import { buildPromptSection } from "../lib/promptSanitizer";
 import { getAvailableCredits, isPaidSubscriptionStatus } from "../lib/usage";
@@ -27,16 +27,15 @@ async function createVisitorConversation(profile: Pick<Profile, "id" | "userId">
     !!subscription &&
     subscription.planName !== "Free" &&
     isPaidSubscriptionStatus(subscription.status);
-  const purchasedCredits = subscription?.purchasedCredits ?? 0;
   const availableCredits = getAvailableCredits({
     monthlyIncludedCredits: hasPaidPlan ? subscription?.monthlyCredits : 0,
-    purchasedCredits,
+    purchasedCredits: 0,
     ledgerCreditsDelta: ledger._sum.creditsDelta ?? 0,
   });
   const canRunAiScreening =
     isAIConfigured() &&
     availableCredits >= AI_SCREENING_CREDIT_COST &&
-    (hasPaidPlan || purchasedCredits >= AI_SCREENING_CREDIT_COST);
+    (hasPaidPlan || availableCredits >= AI_SCREENING_CREDIT_COST);
 
   let aiScreeningUsed = false;
   let summaryText = canRunAiScreening
@@ -51,15 +50,9 @@ async function createVisitorConversation(profile: Pick<Profile, "id" | "userId">
 ${buildPromptSection("Request", data)}
 Return JSON: {"summaryText": "...", "qualificationLevel": "high fit | possible fit | low fit | unclear", "suggestedAction": "..."}`;
 
-      const resAI = await ai.models.generateContent({
-        model: "gemini-2.5-flash",
-        contents: prompt,
-        config: {
-          responseMimeType: "application/json",
-        }
-      });
-      if (resAI.text) {
-        const aiParse = parseScreeningOutput(resAI.text);
+      const text = await generateJsonObject([{ role: "user", content: prompt }]);
+      if (text) {
+        const aiParse = parseScreeningOutput(text);
         summaryText = aiParse.summaryText;
         qualificationLevel = aiParse.qualificationLevel;
         suggestedAction = aiParse.suggestedAction;
@@ -101,30 +94,6 @@ Return JSON: {"summaryText": "...", "qualificationLevel": "high fit | possible f
 
   return conv;
 }
-
-inboxRouter.post("/intake/:profileId", async (req, res) => {
-  try {
-    const { profileId } = req.params;
-    const parsed = visitorIntakeSchema.safeParse(req.body);
-    if (!parsed.success) {
-      res.status(400).json({ error: "Invalid payload", details: parsed.error.issues });
-      return;
-    }
-    const data = parsed.data;
-
-    const profile = await prisma.profile.findUnique({ where: { id: profileId } });
-    if (!profile) {
-      res.status(404).json({ error: "Profile not found" });
-      return;
-    }
-
-    const conv = await createVisitorConversation(profile, data);
-    res.json(conv);
-  } catch (e: any) {
-    console.error("[Intake Error]", e.message);
-    res.status(500).json({ error: "Failed to process intake" });
-  }
-});
 
 inboxRouter.post("/p/:slug/intake", async (req, res) => {
   try {

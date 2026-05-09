@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useLanguage } from "../contexts/LanguageContext";
 import { Zap, Shield, Globe, Clock, CheckCircle2, ArrowRight, TrendingUp, HelpCircle, CreditCard, Receipt, ExternalLink, RefreshCw, ShoppingCart, Coins } from "lucide-react";
-import { authHeaders, jsonHeaders } from "../lib/api";
+import { apiFetch, authHeaders, jsonHeaders } from "../lib/api";
 
 const translations = {
   en: {
@@ -76,7 +76,7 @@ export default function Upgrade() {
   const [loadingAction, setLoadingAction] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch("/api/billing/summary", { headers: authHeaders() })
+    apiFetch("/api/billing/summary", { headers: authHeaders() })
       .then((r) => r.ok ? r.json() : null)
       .then(setBilling)
       .catch(() => setBilling(null));
@@ -97,7 +97,7 @@ export default function Upgrade() {
   const startCheckout = async (priceLookupKey: string) => {
     setLoadingAction(priceLookupKey);
     try {
-      const res = await fetch("/api/billing/checkout-session", {
+      const res = await apiFetch("/api/billing/checkout-session", {
         method: "POST",
         headers: jsonHeaders(),
         body: JSON.stringify({ priceLookupKey }),
@@ -112,7 +112,7 @@ export default function Upgrade() {
   const openPortal = async () => {
     setLoadingAction("portal");
     try {
-      const res = await fetch("/api/billing/portal-session", {
+      const res = await apiFetch("/api/billing/portal-session", {
         method: "POST",
         headers: jsonHeaders(),
         body: JSON.stringify({ returnUrl: window.location.href }),

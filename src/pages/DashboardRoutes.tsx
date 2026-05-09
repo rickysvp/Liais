@@ -7,8 +7,9 @@ import Upgrade from "./Upgrade";
 import { Copy, InboxIcon, Settings, User, Globe, Send, Loader2, TrendingUp, Users, MessageSquare, Clock, Calendar, Zap, ArrowRight, CheckCircle2, AlertCircle, ShieldCheck, Brain, Receipt } from "lucide-react";
 import { useEffect, useState, useRef } from "react";
 import { useLanguage } from "../contexts/LanguageContext";
+import { useAuth } from "../contexts/AuthContext";
 import { translations } from '../i18n/dashboard';
-import { authHeaders, jsonHeaders } from "../lib/api";
+import { apiFetch, authHeaders, jsonHeaders } from "../lib/api";
 
 interface Profile {
   displayName: string;
@@ -179,7 +180,7 @@ function MessageContent({ content, onSelectCard }: { content: string, onSelectCa
                    <div className="px-2 py-0.5 bg-emerald-500 text-slate-900 text-[9px] font-black rounded uppercase tracking-widest">Performance Insight</div>
                 </div>
                 <h3 className="text-3xl font-black text-white tracking-tight mb-2">
-                  <span className="text-[#D2E823]">{data.timeSaved || '45m'}</span> saved today.
+                  <span className="text-[#D2E823]">{data.timeSaved || "0m"}</span> saved today.
                 </h3>
                 <p className="text-[14px] font-medium leading-relaxed tracking-tight text-slate-400">
                   Through autonomous screening and priority routing.
@@ -188,11 +189,11 @@ function MessageContent({ content, onSelectCard }: { content: string, onSelectCa
                 <div className="mt-8 grid grid-cols-3 gap-8 pt-8 border-t border-white/10">
                   <div>
                     <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Total Screened</div>
-                    <div className="text-2xl font-black text-white">1,240</div>
+                    <div className="text-2xl font-black text-white">{data.totalScreened ?? data.cards?.length ?? 0}</div>
                   </div>
                   <div>
                     <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Distractions Filtered</div>
-                    <div className="text-2xl font-black text-emerald-400">{data.filteredCount || 28}</div>
+                    <div className="text-2xl font-black text-emerald-400">{data.filteredCount ?? 0}</div>
                   </div>
                   <div>
                     <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">High-Signal Opportunities</div>
@@ -207,8 +208,8 @@ function MessageContent({ content, onSelectCard }: { content: string, onSelectCa
               <div>
                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Inbound Velocity</span>
                 <div className="flex items-baseline gap-2 mt-1">
-                  <span className="text-3xl font-black text-slate-900">High</span>
-                  <span className="text-[12px] font-bold text-emerald-500">+12.5%</span>
+                  <span className="text-3xl font-black text-slate-900">{(data.cards?.length ?? 0) > 0 ? "Active" : "Idle"}</span>
+                  <span className="text-[12px] font-bold text-emerald-500">{(data.cards?.length ?? 0) > 0 ? "Live" : "0 new"}</span>
                 </div>
               </div>
               <div className="mt-6 mb-2">
@@ -300,7 +301,7 @@ function MessageContent({ content, onSelectCard }: { content: string, onSelectCa
                   <Clock className="w-3.5 h-3.5 text-slate-300" /> Latency: 42ms
                 </div>
                 <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest">
-                  <Zap className="w-3.5 h-3.5 text-slate-300" /> Models: Gemini 2.0 Pro
+                  <Zap className="w-3.5 h-3.5 text-slate-300" /> Intelligence active
                 </div>
              </div>
              <button className="px-8 py-3 bg-slate-900 text-white text-[13px] font-bold rounded-2xl hover:bg-slate-800 transition-all flex items-center gap-2 group shadow-xl">
@@ -321,16 +322,37 @@ function DashboardHome() {
   const [loading, setLoading] = useState(false);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [selectedCard, setSelectedCard] = useState<InboundCard | null>(null);
+  const [initialized, setInitialized] = useState(false);
+  const [trialMode, setTrialMode] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const hasAccessToken = Boolean(localStorage.getItem("liais_access_token"));
 
   useEffect(() => {
-    fetch("/api/me/profile", { headers: authHeaders() })
-      .then(r => r.ok ? r.json() : null)
+    if (!hasAccessToken) {
+      setTrialMode(true);
+      setInitialized(true);
+      return;
+    }
+
+    apiFetch("/api/me/profile", { headers: authHeaders() })
+      .then(r => {
+        if (r.status === 401) {
+          setTrialMode(true);
+          return null;
+        }
+        return r.ok ? r.json() : null;
+      })
       .then(setProfile)
       .catch(() => setProfile(null));
 
-    fetch("/api/chat", { headers: authHeaders() })
-      .then(res => res.json())
+    apiFetch("/api/chat", { headers: authHeaders() })
+      .then(res => {
+        if (res.status === 401) {
+          setTrialMode(true);
+          return { data: [] };
+        }
+        return res.json();
+      })
       .then(data => {
         const msgs = Array.isArray(data) ? data : (data.data || []);
         setMessages(msgs);
@@ -339,7 +361,7 @@ function DashboardHome() {
         const hasBriefing = msgs.some(m => m.content.includes('"type":"briefing"'));
         if (!hasBriefing) {
           setLoading(true);
-          fetch("/api/chat/greeting", { method: "POST", headers: authHeaders() })
+          apiFetch("/api/chat/greeting", { method: "POST", headers: authHeaders() })
             .then(r => r.json())
             .then(msg => {
               setMessages(prev => [...prev, msg]);
@@ -347,9 +369,12 @@ function DashboardHome() {
             })
             .catch(() => setLoading(false));
         }
+        setInitialized(true);
       })
-      .catch(() => {});
-  }, []);
+      .catch(() => {
+        setInitialized(true);
+      });
+  }, [hasAccessToken]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -364,7 +389,7 @@ function DashboardHome() {
     setLoading(true);
 
     try {
-      const res = await fetch("/api/chat/message", {
+      const res = await apiFetch("/api/chat/message", {
         method: "POST",
         headers: jsonHeaders(),
         body: JSON.stringify({ message: input })
@@ -417,7 +442,7 @@ function DashboardHome() {
           <button 
             onClick={() => {
               setLoading(true);
-              fetch("/api/chat/greeting", { method: "POST", headers: authHeaders() })
+              apiFetch("/api/chat/greeting", { method: "POST", headers: authHeaders() })
                 .then(r => r.json())
                 .then(msg => {
                   setMessages(prev => [...prev, msg]);
@@ -436,12 +461,28 @@ function DashboardHome() {
 
         {/* Messages Area */}
         <div className="flex-1 overflow-y-auto px-10 py-10 space-y-8">
-          {messages.length === 0 ? (
+          {!initialized ? (
             <div className="flex flex-col items-center justify-center h-full text-center space-y-6">
               <div className="w-20 h-20 rounded-[32px] bg-gradient-to-br from-slate-100 to-slate-50 border border-slate-200 flex items-center justify-center shadow-xl">
                 <Loader2 className="w-10 h-10 text-slate-400 animate-spin" />
               </div>
               <p className="text-slate-400 font-bold uppercase tracking-widest text-[11px]">Initializing Intelligence Hub...</p>
+            </div>
+          ) : trialMode ? (
+            <div className="flex flex-col items-center justify-center h-full text-center space-y-6">
+              <div className="w-20 h-20 rounded-[32px] bg-slate-900 text-white flex items-center justify-center shadow-xl">
+                <ShieldCheck className="w-10 h-10 text-[#D2E823]" />
+              </div>
+              <p className="text-slate-700 font-bold text-lg">Free trial mode is active.</p>
+              <p className="text-slate-500 max-w-lg">Complete onboarding and sign in with Google or email to enable your live inbox, AI screening, and billing data.</p>
+              <Link to="/onboarding" className="px-6 py-3 rounded-xl bg-slate-900 text-white font-bold text-sm">Continue Onboarding</Link>
+            </div>
+          ) : messages.length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-full text-center space-y-6">
+              <div className="w-20 h-20 rounded-[32px] bg-gradient-to-br from-slate-100 to-slate-50 border border-slate-200 flex items-center justify-center shadow-xl">
+                <MessageSquare className="w-10 h-10 text-slate-400" />
+              </div>
+              <p className="text-slate-400 font-bold uppercase tracking-widest text-[11px]">No live briefing yet</p>
             </div>
           ) : (
             <>
@@ -652,6 +693,7 @@ function DashboardHome() {
 export default function DashboardRoutes() {
   const location = useLocation();
   const { language, setLanguage } = useLanguage();
+  const { isAuthenticated, signOut } = useAuth();
   const t = translations[language as keyof typeof translations] || translations.en;
 
   const navItemClass = (path: string) =>
@@ -665,11 +707,8 @@ export default function DashboardRoutes() {
     <div className="flex h-screen bg-slate-50 overflow-hidden">
       {/* Fixed Sidebar */}
       <div className="w-[260px] shrink-0 bg-white border-r border-slate-200 p-5 flex flex-col h-screen">
-        <div className="px-3 py-6 mb-4">
-          <div className="flex items-center gap-3">
-            <img src="/img/logo.png" alt="Liais" className="w-10 h-10 rounded-xl shadow-lg object-contain bg-slate-900" />
-            <span className="text-[#111] text-xl font-bold tracking-tight">Liais</span>
-          </div>
+        <div className="px-3 py-6 mb-4 flex justify-center">
+          <img src="/img/logo.png" alt="Liais" className="w-auto h-auto max-w-full rounded-xl" />
         </div>
         
         <nav className="space-y-1.5 flex-1">
@@ -698,6 +737,26 @@ export default function DashboardRoutes() {
         </nav>
 
         <div className="pt-4 border-t border-slate-200 space-y-1">
+          {isAuthenticated ? (
+            <button
+              onClick={async () => {
+                await signOut();
+                window.location.href = "/onboarding";
+              }}
+              className="flex items-center space-x-3 px-4 py-3 rounded-xl font-medium transition-all duration-200 w-full text-slate-400 hover:text-slate-600 hover:bg-slate-100"
+            >
+              <User className="w-5 h-5" />
+              <span className="text-sm">Sign out</span>
+            </button>
+          ) : (
+            <Link
+              to="/auth?next=%2Fdashboard"
+              className="flex items-center space-x-3 px-4 py-3 rounded-xl font-medium transition-all duration-200 w-full text-slate-400 hover:text-slate-600 hover:bg-slate-100"
+            >
+              <User className="w-5 h-5" />
+              <span className="text-sm">Sign in</span>
+            </Link>
+          )}
           <button
             onClick={() => setLanguage(language === "en" ? "zh" : "en")}
             className="flex items-center space-x-3 px-4 py-3 rounded-xl font-medium transition-all duration-200 w-full text-slate-400 hover:text-slate-600 hover:bg-slate-100"

@@ -1,58 +1,59 @@
 import { Request, Response, NextFunction } from "express";
 import { prisma } from "./db";
-import { getAuthenticatedUserId } from "./session";
+import { getAuthenticatedUser } from "./session";
 
 declare global {
   namespace Express {
     interface Request {
       userId?: string;
+      userEmail?: string | null;
       profileId?: string;
     }
   }
 }
 
 export async function authMiddleware(req: Request, res: Response, next: NextFunction) {
-  const userId = await getAuthenticatedUserId(req);
+  try {
+    const user = await getAuthenticatedUser(req);
+    if (!user) {
+      res.status(401).json({ error: "Authentication required." });
+      return;
+    }
 
-  if (!userId) {
-    res.status(401).json({ error: "Authentication required. Provide x-user-id header." });
-    return;
+    req.userId = user.id;
+    req.userEmail = user.email;
+    next();
+  } catch (error: any) {
+    console.error("[Auth Middleware Error]", error?.message || error);
+    res.status(503).json({ error: "Authentication service unavailable" });
   }
-
-  const user = await prisma.user.findUnique({ where: { id: userId } });
-  if (!user) {
-    res.status(401).json({ error: "User not found" });
-    return;
-  }
-
-  req.userId = userId;
-  next();
 }
 
 export async function profileMiddleware(req: Request, res: Response, next: NextFunction) {
-  if (!req.userId) {
-    res.status(401).json({ error: "Authentication required" });
-    return;
+  try {
+    if (!req.userId) {
+      res.status(401).json({ error: "Authentication required" });
+      return;
+    }
+
+    const profile = await prisma.profile.findUnique({
+      where: { userId: req.userId },
+      include: { boundaries: true }
+    });
+
+    if (!profile) {
+      res.status(404).json({ error: "Profile not found. Complete onboarding first." });
+      return;
+    }
+
+    req.profileId = profile.id;
+    next();
+  } catch (error: any) {
+    console.error("[Profile Middleware Error]", error?.message || error);
+    res.status(503).json({ error: "Profile service unavailable" });
   }
-
-  const profile = await prisma.profile.findUnique({
-    where: { userId: req.userId },
-    include: { boundaries: true }
-  });
-
-  if (!profile) {
-    res.status(404).json({ error: "Profile not found. Complete onboarding first." });
-    return;
-  }
-
-  req.profileId = profile.id;
-  next();
 }
 
 export function optionalAuthMiddleware(req: Request, res: Response, next: NextFunction) {
-  const userId = req.headers["x-user-id"] as string;
-  if (userId && process.env.NODE_ENV !== "production") {
-    req.userId = userId;
-  }
   next();
 }

@@ -3,7 +3,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
+import { jsonHeaders } from "../lib/api";
 
 interface OnboardingPayload {
   primaryConnectionGoal: string;
@@ -55,11 +56,15 @@ const UserBubble = ({ children }: { children: React.ReactNode }) => (
 export default function OnboardingFlow() {
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [linkedinMode, setLinkedinMode] = useState(false);
   const [linkedinUrl, setLinkedinUrl] = useState("");
   const [importingLinkedin, setImportingLinkedin] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
   const chatEndRef = useRef<HTMLDivElement>(null);
+  const [accountEmail, setAccountEmail] = useState("");
+  const [publishedUrl, setPublishedUrl] = useState<string | null>(null);
   
   const [payload, setPayload] = useState<OnboardingPayload>({
     primaryConnectionGoal: "",
@@ -82,36 +87,14 @@ export default function OnboardingFlow() {
 
   const handleLinkedinImport = () => {
     setImportingLinkedin(true);
-    // Simulate LinkedIn Scraping and Parsing
     setTimeout(() => {
-      let mockName = "Alex";
-      if (linkedinUrl.includes("/in/")) {
-        const parts = linkedinUrl.split("/in/");
-        if (parts[1]) {
-           const username = parts[1].replace("/", "").split("?")[0];
-           mockName = username.split("-").map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(" ");
-        }
-      }
-      
-      setPayload((prev) => ({
-        ...prev,
-        linkedinUrl,
-        displayName: mockName,
-        headline: "Software Engineer & Builder",
-        companyOrProject: "Tech Co.",
-        city: "San Francisco, CA",
-        whatYouDo: "I build responsive, modern web applications and AI-driven tools.",
-        whoYouHelp: "Startups, enterprises, and ambitious founders.",
-      }));
-      
       setImportingLinkedin(false);
-      setLinkedinMode(false);
-      // Skip the what/who questions if we fill them here, go to step 5:
-      setStep(5);
-    }, 2500);
+      setErrorMessage("LinkedIn import is not enabled yet. Please complete the fields manually.");
+    }, 600);
   };
 
   const handleNext = async () => {
+    setErrorMessage(null);
     if (step < 7) {
       setStep(step + 1);
     } else if (step === 7) {
@@ -122,11 +105,18 @@ export default function OnboardingFlow() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ payload }),
         });
+        if (!res.ok) {
+          const body = await res.json().catch(() => ({}));
+          setErrorMessage(body?.error || "AI preview is currently unavailable.");
+          setStep(8);
+          return;
+        }
         const data = await res.json();
         setGenerated(data);
         setStep(8);
       } catch (e) {
         console.error(e);
+        setErrorMessage("Unable to generate preview right now.");
       } finally {
         setLoading(false);
       }
@@ -134,18 +124,37 @@ export default function OnboardingFlow() {
   };
 
   const handlePublish = async () => {
+    setErrorMessage(null);
+    setPublishedUrl(null);
     setLoading(true);
     try {
-      const userId = localStorage.getItem("liais_user_id") || crypto.randomUUID();
-      localStorage.setItem("liais_user_id", userId);
-      await fetch("/api/profile/publish", {
+      const accessToken = localStorage.getItem("liais_access_token");
+      if (!accessToken) {
+        localStorage.setItem("liais_onboarding_draft", JSON.stringify({ payload, generated, step: 8, accountEmail }));
+        const search = new URLSearchParams({
+          next: "/onboarding",
+          intent: "publish",
+          ...(accountEmail ? { email: accountEmail } : {}),
+        });
+        navigate(`/auth?${search.toString()}`);
+        return;
+      }
+      const res = await fetch("/api/profile/publish", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId, payload, generated }),
+        headers: jsonHeaders(),
+        body: JSON.stringify({ payload, generated, accountEmail: accountEmail || undefined }),
       });
-      navigate("/dashboard");
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        setErrorMessage(body?.error || "Publishing failed. Please check your setup and try again.");
+        return;
+      }
+      const body = await res.json().catch(() => null);
+      localStorage.removeItem("liais_onboarding_draft");
+      setPublishedUrl(body?.profileUrl || null);
     } catch(e) {
       console.error(e);
+      setErrorMessage("Publishing failed. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -154,6 +163,27 @@ export default function OnboardingFlow() {
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [step, loading]);
+
+  useEffect(() => {
+    const draftRaw = localStorage.getItem("liais_onboarding_draft");
+    if (!draftRaw) return;
+    try {
+      const draft = JSON.parse(draftRaw);
+      if (draft?.payload) setPayload(draft.payload);
+      if (draft?.generated) setGenerated(draft.generated);
+      if (typeof draft?.step === "number") setStep(draft.step);
+      if (typeof draft?.accountEmail === "string") setAccountEmail(draft.accountEmail);
+    } catch {
+      // no-op
+    }
+  }, []);
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    if (params.get("authed") === "1" && params.get("intent") === "publish" && step === 8) {
+      handlePublish();
+    }
+  }, [location.search, step]);
 
   return (
     <div className="min-h-screen bg-[#F3F3F1] sm:py-8 px-0 sm:px-4 flex justify-center font-sans tracking-normal relative selection:bg-[#D2E823] selection:text-[#111]">
@@ -175,6 +205,11 @@ export default function OnboardingFlow() {
         </div>
         
         <div className="flex-1 overflow-y-auto pt-28 pb-32 px-6 lg:px-12 space-y-2">
+          {errorMessage && (
+            <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+              {errorMessage}
+            </div>
+          )}
           
           <AIBubble>
             <p>Hi there. Let's get your Liais up and running.</p>
@@ -427,10 +462,41 @@ export default function OnboardingFlow() {
 
                 <p className="mt-6 font-medium">To save these details and publish your page, set up your account email.</p>
                 <div className="space-y-3 mt-4 bg-slate-50 p-5 rounded-2xl border border-slate-100">
-                  <Input placeholder="Email Address" type="email" className="bg-white rounded-xl shadow-sm h-12" />
+                  <Input
+                    placeholder="Email Address"
+                    type="email"
+                    value={accountEmail}
+                    onChange={(e) => setAccountEmail(e.target.value)}
+                    className="bg-white rounded-xl shadow-sm h-12"
+                  />
                   <Button onClick={handlePublish} disabled={loading} className="w-full rounded-xl bg-slate-900 text-white h-12 font-medium shadow-sm transition-transform active:scale-95">
                     {loading ? "Publishing..." : "Publish Page & Access Dashboard"}
                   </Button>
+                  {publishedUrl && (
+                    <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-3 space-y-2">
+                      <p className="text-xs font-semibold text-emerald-800">Profile published successfully.</p>
+                      <div className="flex items-center gap-2">
+                        <Input value={publishedUrl} readOnly className="h-10 bg-white" />
+                        <Button
+                          type="button"
+                          variant="outline"
+                          className="h-10"
+                          onClick={async () => {
+                            await navigator.clipboard.writeText(publishedUrl);
+                          }}
+                        >
+                          Copy
+                        </Button>
+                      </div>
+                      <Button
+                        type="button"
+                        className="w-full h-10 bg-slate-900 text-white"
+                        onClick={() => navigate("/dashboard")}
+                      >
+                        Go to Dashboard
+                      </Button>
+                    </div>
+                  )}
                 </div>
               </AIBubble>
             </>
@@ -442,4 +508,3 @@ export default function OnboardingFlow() {
     </div>
   );
 }
-

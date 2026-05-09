@@ -1,10 +1,9 @@
 import { useEffect, useState } from "react";
 import { useLanguage } from "../contexts/LanguageContext";
 import { Shield, Zap, Clock, User, ArrowRight, CheckCircle2, MessageSquare, Mail, Calendar, Archive, EyeOff, Brain, TrendingUp } from "lucide-react";
-import { authHeaders, jsonHeaders } from "../lib/api";
+import { apiFetch, authHeaders, jsonHeaders } from "../lib/api";
 
 import { translations } from '../i18n/inbox';
-import { getMockBriefs } from '../mocks/inboxMocks';
 
 interface Conversation {
   id: string;
@@ -31,7 +30,6 @@ interface Conversation {
 export default function Inbox() {
   const { language } = useLanguage();
   const t = translations[language as keyof typeof translations];
-  const translatedMockBriefs = getMockBriefs(t);
 
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -57,7 +55,7 @@ export default function Inbox() {
   };
 
   useEffect(() => {
-    fetch("/api/inbox", { headers: authHeaders() })
+    apiFetch("/api/inbox", { headers: authHeaders() })
       .then((r) => r.json())
       .then((data) => {
         const items = Array.isArray(data) ? data : (data.data || []);
@@ -65,20 +63,20 @@ export default function Inbox() {
           setConversations(items);
           setSelectedId(items[0].id);
         } else {
-          setConversations(translatedMockBriefs);
-          setSelectedId(translatedMockBriefs[0].id);
+          setConversations([]);
+          setSelectedId(null);
         }
       })
       .catch(() => {
-        setConversations(translatedMockBriefs);
-        setSelectedId(translatedMockBriefs[0].id);
+        setConversations([]);
+        setSelectedId(null);
       });
   }, [language]);
 
   const handleUpdateStatus = async (status: string) => {
-    if (!selectedId || selectedId.startsWith("mock-")) return;
+    if (!selectedId) return;
     try {
-      await fetch(`/api/inbox/${selectedId}/status`, {
+      await apiFetch(`/api/inbox/${selectedId}/status`, {
         method: "PUT",
         headers: jsonHeaders(),
         body: JSON.stringify({ status }),

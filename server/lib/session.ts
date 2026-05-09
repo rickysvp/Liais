@@ -1,4 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
+import ws from "ws";
 import type { Request } from "express";
 
 let supabaseAuthClient: ReturnType<typeof createClient> | null = null;
@@ -8,10 +9,6 @@ function getBearerToken(req: Request): string | null {
   if (!header) return null;
   const [scheme, token] = header.split(" ");
   return scheme?.toLowerCase() === "bearer" && token ? token : null;
-}
-
-function canUseDemoHeaderFallback(): boolean {
-  return process.env.NODE_ENV !== "production" || process.env.ALLOW_DEMO_AUTH === "true";
 }
 
 function getSupabaseAuthClient() {
@@ -24,6 +21,9 @@ function getSupabaseAuthClient() {
       process.env.SUPABASE_URL,
       process.env.SUPABASE_SERVICE_ROLE_KEY,
       {
+        realtime: {
+          transport: ws as any,
+        },
         auth: {
           autoRefreshToken: false,
           persistSession: false,
@@ -35,20 +35,20 @@ function getSupabaseAuthClient() {
   return supabaseAuthClient;
 }
 
-export async function getAuthenticatedUserId(req: Request): Promise<string | null> {
+export async function getAuthenticatedUser(req: Request): Promise<{ id: string; email: string | null } | null> {
   const bearerToken = getBearerToken(req);
   const supabase = getSupabaseAuthClient();
 
   if (bearerToken && supabase) {
     const { data, error } = await supabase.auth.getUser(bearerToken);
     if (error || !data.user?.id) return null;
-    return data.user.id;
-  }
-
-  const demoUserId = req.headers["x-user-id"];
-  if (typeof demoUserId === "string" && canUseDemoHeaderFallback()) {
-    return demoUserId;
+    return { id: data.user.id, email: data.user.email ?? null };
   }
 
   return null;
+}
+
+export async function getAuthenticatedUserId(req: Request): Promise<string | null> {
+  const user = await getAuthenticatedUser(req);
+  return user?.id ?? null;
 }

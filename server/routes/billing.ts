@@ -128,7 +128,7 @@ billingRouter.get("/billing/summary", authMiddleware, async (req, res) => {
       ledgerCreditsDelta,
       availableCredits: getAvailableCredits({
         monthlyIncludedCredits: monthlyCredits,
-        purchasedCredits,
+        purchasedCredits: 0,
         ledgerCreditsDelta,
       }),
       currentPeriodEnd: subscription?.currentPeriodEnd || null,

@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "../contexts/LanguageContext";
-import { authHeaders, jsonHeaders } from "../lib/api";
+import { apiFetch, authHeaders, jsonHeaders } from "../lib/api";
 
 const translations = {
   en: {
@@ -61,14 +61,14 @@ export default function VisitorDetail() {
   const t = translations[language as keyof typeof translations] || translations.en;
 
   useEffect(() => {
-    fetch(`/api/inbox/${id}`, { headers: authHeaders() })
+    apiFetch(`/api/inbox/${id}`, { headers: authHeaders() })
       .then(r => r.json())
       .then((data: any) => setConv(data.error ? null : data));
   }, [id]);
 
   const updateStatus = async (status: string) => {
     try {
-      const res = await fetch(`/api/inbox/${id}/status`, {
+      const res = await apiFetch(`/api/inbox/${id}/status`, {
         method: 'PUT',
         headers: jsonHeaders(),
         body: JSON.stringify({ status })

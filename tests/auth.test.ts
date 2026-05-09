@@ -25,11 +25,9 @@ describe("session authentication", () => {
     expect(getUser).toHaveBeenCalledWith("token-1");
   });
 
-  it("allows x-user-id only as local demo fallback", async () => {
+  it("rejects authentication without a valid bearer token", async () => {
     delete process.env.SUPABASE_URL;
     delete process.env.SUPABASE_SERVICE_ROLE_KEY;
-    process.env.NODE_ENV = "test";
-
-    await expect(getAuthenticatedUserId(req({ "x-user-id": "demo-user" }))).resolves.toBe("demo-user");
+    await expect(getAuthenticatedUserId(req({ "x-user-id": "demo-user" }))).resolves.toBeNull();
   });
 });

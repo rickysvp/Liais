@@ -1,30 +1,26 @@
 import { Router } from "express";
 import { prisma } from "../lib/db";
-import { ai, isAIConfigured } from "../lib/ai";
+import { generateText, isAIConfigured } from "../lib/ai";
+import type { ChatMessage } from "../lib/ai";
 import { buildPromptSection, sanitizeForPrompt } from "../lib/promptSanitizer";
 import { aiLimiter } from "../lib/rateLimiter";
+import { authMiddleware, profileMiddleware } from "../lib/auth";
 
 export const chatRouter = Router();
 
-chatRouter.get("/chat", async (req, res) => {
+chatRouter.get("/", authMiddleware, profileMiddleware, async (req, res) => {
   try {
-    const profile = await prisma.profile.findFirst();
-    if (!profile) {
-      res.json({ data: [], total: 0, limit: 50, offset: 0 });
-      return;
-    }
-
     const limit = Math.min(parseInt(req.query.limit as string) || 50, 100);
     const offset = parseInt(req.query.offset as string) || 0;
 
     const [msgs, total] = await Promise.all([
       prisma.secretaryMessage.findMany({
-        where: { profileId: profile.id },
+        where: { profileId: req.profileId },
         orderBy: { createdAt: "asc" },
         take: limit,
         skip: offset,
       }),
-      prisma.secretaryMessage.count({ where: { profileId: profile.id } })
+      prisma.secretaryMessage.count({ where: { profileId: req.profileId } })
     ]);
 
     res.json({ data: msgs, total, limit, offset });
@@ -34,12 +30,12 @@ chatRouter.get("/chat", async (req, res) => {
   }
 });
 
-chatRouter.post("/chat/greeting", async (req, res) => {
+chatRouter.post("/greeting", authMiddleware, profileMiddleware, async (req, res) => {
   try {
-    let profile = await prisma.profile.findFirst();
+    const profile = await prisma.profile.findUnique({ where: { id: req.profileId! } });
     if (!profile) {
-      const user = await prisma.user.create({ data: { email: "demo@example.com", name: "Ricky" } });
-      profile = await prisma.profile.create({ data: { userId: user.id, slug: "demo", displayName: "Ricky" } });
+      res.status(404).json({ error: "Profile not found" });
+      return;
     }
 
     const inbounds = await prisma.visitorConversation.findMany({
@@ -51,17 +47,14 @@ chatRouter.post("/chat/greeting", async (req, res) => {
       type: "briefing",
       text: inbounds.length > 0 
         ? `Welcome back, ${sanitizeForPrompt(profile.displayName.split(" ")[0])}. Liais has been active. I've screened your latest traffic and identified ${inbounds.length} high-signal introductions that require your attention.`
-        : `Good morning, ${sanitizeForPrompt(profile.displayName.split(" ")[0])}. Your executive inbox is currently clear of distractions. I've screened 1,240 visitors today and automatically filtered 28 junk inquiries, maintaining your focus for high-value work.`,
-      filteredCount: 28,
-      timeSaved: "45m",
+        : `Good morning, ${sanitizeForPrompt(profile.displayName.split(" ")[0])}. Your executive inbox is currently clear. No new qualified introductions have been detected yet.`,
+      filteredCount: inbounds.length,
+      timeSaved: inbounds.length > 0 ? `${Math.min(inbounds.length * 3, 60)}m` : "0m",
       stats: [
-        { label: "Total Screening", value: "1,240", trend: "+12.5%", color: "emerald" },
-        { label: "Actionable", value: inbounds.length.toString(), trend: "Clear", color: inbounds.length > 0 ? "purple" : "slate" }
+        { label: "Total Screening", value: inbounds.length.toString(), trend: "Live", color: "emerald" },
+        { label: "Actionable", value: inbounds.length.toString(), trend: inbounds.length > 0 ? "Review" : "Clear", color: inbounds.length > 0 ? "purple" : "slate" }
       ],
-      schedule: [
-        { time: "10:00 AM", title: "Morning Review", type: "External" },
-        { time: "02:00 PM", title: "Deep Work: Agent Logic", type: "Focus" }
-      ],
+      schedule: [],
       insights: inbounds.length > 0 
         ? inbounds.slice(0, 2).map(ib => ({
             type: "opportunity",
@@ -72,9 +65,9 @@ chatRouter.post("/chat/greeting", async (req, res) => {
         : [
             { 
               type: "status", 
-              observation: "System Healthy: Liais has been monitoring 12 different source channels for the last 8 hours.",
-              inference: "No anomalies detected in inbound traffic patterns.",
-              action: "Maintain current screening boundaries."
+              observation: "System Healthy: intake endpoint is active and waiting for new submissions.",
+              inference: "No pending opportunities require action right now.",
+              action: "Share your profile link to receive qualified inbound requests."
             }
           ],
       cards: inbounds.map(ib => ({
@@ -104,7 +97,7 @@ chatRouter.post("/chat/greeting", async (req, res) => {
   }
 });
 
-chatRouter.post("/chat/message", aiLimiter, async (req, res) => {
+chatRouter.post("/message", authMiddleware, profileMiddleware, aiLimiter, async (req, res) => {
   try {
     const { message } = req.body;
     if (!message || typeof message !== "string" || message.trim().length === 0) {
@@ -116,12 +109,13 @@ chatRouter.post("/chat/message", aiLimiter, async (req, res) => {
       return;
     }
 
-    let profile = await prisma.profile.findFirst({
+    const profile = await prisma.profile.findUnique({
+      where: { id: req.profileId! },
       include: { boundaries: true }
     });
     if (!profile) {
-      const user = await prisma.user.create({ data: { email: "demo@example.com", name: "Ricky" } });
-      profile = await prisma.profile.create({ data: { userId: user.id, slug: "demo", displayName: "Ricky" }, include: { boundaries: true } });
+      res.status(404).json({ error: "Profile not found" });
+      return;
     }
 
     await prisma.secretaryMessage.create({
@@ -143,12 +137,7 @@ chatRouter.post("/chat/message", aiLimiter, async (req, res) => {
       where: { profileId: profile.id, status: "new" }
     });
 
-    const contents = history.map(h => ({
-      role: h.role === "assistant" ? "model" : "user" as const,
-      parts: [{ text: h.content }]
-    }));
-
-    let assistantText = "I'm sorry, I couldn't process that right now. AI service is not configured.";
+    let assistantText = "I couldn't process that just now. Please try again in a moment.";
 
     if (isAIConfigured()) {
       try {
@@ -161,15 +150,18 @@ Respond conversationally, like iMessage or Slack DM. Be concise, professional, a
 If the user asks to update their profile or boundaries, acknowledge the change.
 If the user asks to take action on an inbound (e.g., ignore, reply), acknowledge it.`;
 
-        const resAI = await ai.models.generateContent({
-          model: "gemini-2.5-flash",
-          contents,
-          config: {
-            systemInstruction,
-          }
-        });
+        const messages: ChatMessage[] = [
+          { role: "system" as const, content: systemInstruction },
+          ...history.map((h) => {
+            const normalizedRole: ChatMessage["role"] = h.role === "assistant" ? "assistant" : "user";
+            return {
+              role: normalizedRole,
+              content: h.content,
+            };
+          }),
+        ];
 
-        assistantText = resAI.text || assistantText;
+        assistantText = (await generateText(messages)) || assistantText;
       } catch (e: any) {
         console.error("[AI Chat Error]", e.message);
       }

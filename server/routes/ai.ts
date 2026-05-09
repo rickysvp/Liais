@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { ai, isAIConfigured } from "../lib/ai";
+import { generateJsonObject, isAIConfigured } from "../lib/ai";
 import { aiLimiter } from "../lib/rateLimiter";
 import { buildPromptSection } from "../lib/promptSanitizer";
 
@@ -8,7 +8,7 @@ export const aiRouter = Router();
 aiRouter.post("/ai/generate-preview", aiLimiter, async (req, res, next) => {
   try {
     if (!isAIConfigured()) {
-      res.status(503).json({ error: "AI service is not configured" });
+      res.status(503).json({ error: "Preview service is temporarily unavailable" });
       return;
     }
 
@@ -18,16 +18,9 @@ Based on this user info, generate a 2-3 sentence 'generatedIntro', a warm but pr
 ${buildPromptSection("User Info", payload)}
 Return JSON exactly as: {"generatedIntro": "...", "generatedWelcomeMessage": "...","generatedContactScopeText": "..."}`;
     
-    const resAI = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
-      contents: prompt,
-      config: {
-        responseMimeType: "application/json",
-      }
-    });
-    
-    if (!resAI.text) throw new Error("No response from AI");
-    res.json(JSON.parse(resAI.text));
+    const text = await generateJsonObject([{ role: "user", content: prompt }]);
+    if (!text) throw new Error("No response from AI");
+    res.json(JSON.parse(text));
   } catch (e: any) {
     console.error("[AI Generate Preview Error]", e.message);
     res.status(500).json({ error: "Failed to generate preview" });
