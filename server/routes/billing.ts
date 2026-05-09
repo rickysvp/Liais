@@ -1,15 +1,15 @@
 import { Router } from "express";
 import { z } from "zod";
 
-import { authMiddleware } from "../lib/auth";
-import { prisma } from "../lib/db";
-import { getStripe, isStripeConfigured } from "../lib/stripe";
-import { getAvailableCredits } from "../lib/usage";
+import { authMiddleware } from "../lib/auth.js";
+import { prisma } from "../lib/db.js";
+import { getStripe, isStripeConfigured } from "../lib/stripe.js";
+import { getAvailableCredits } from "../lib/usage.js";
 import {
   fulfillCheckoutSession,
   fulfillSubscriptionChange,
   processStripeEventOnce,
-} from "../lib/billingFulfillment";
+} from "../lib/billingFulfillment.js";
 
 export const billingRouter = Router();
 export const billingWebhookRouter = Router();

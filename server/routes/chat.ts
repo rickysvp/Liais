@@ -1,10 +1,10 @@
 import { Router } from "express";
-import { prisma } from "../lib/db";
-import { generateText, isAIConfigured } from "../lib/ai";
-import type { ChatMessage } from "../lib/ai";
-import { buildPromptSection, sanitizeForPrompt } from "../lib/promptSanitizer";
-import { aiLimiter } from "../lib/rateLimiter";
-import { authMiddleware, profileMiddleware } from "../lib/auth";
+import { prisma } from "../lib/db.js";
+import { generateText, isAIConfigured } from "../lib/ai.js";
+import type { ChatMessage } from "../lib/ai.js";
+import { buildPromptSection, sanitizeForPrompt } from "../lib/promptSanitizer.js";
+import { aiLimiter } from "../lib/rateLimiter.js";
+import { authMiddleware, profileMiddleware } from "../lib/auth.js";
 
 export const chatRouter = Router();
 

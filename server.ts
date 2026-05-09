@@ -5,9 +5,9 @@ import process from "process";
 import fs from "fs";
 import "dotenv/config";
 import { fileURLToPath } from 'url';
-import { prisma } from "./server/lib/db";
-import { createApp } from "./server/app";
-import { validateRuntimeEnvOrThrow } from "./server/lib/env";
+import { prisma } from "./server/lib/db.js";
+import { createApp } from "./server/app.js";
+import { validateRuntimeEnvOrThrow } from "./server/lib/env.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);

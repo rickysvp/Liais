@@ -1,8 +1,8 @@
 import { Router } from "express";
 import path from "path";
 import fs from "fs";
-import { prisma } from "../lib/db";
-import { authMiddleware } from "../lib/auth";
+import { prisma } from "../lib/db.js";
+import { authMiddleware } from "../lib/auth.js";
 
 export const systemRouter = Router();
 

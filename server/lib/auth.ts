@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
-import { prisma } from "./db";
-import { getAuthenticatedUser } from "./session";
+import { prisma } from "./db.js";
+import { getAuthenticatedUser } from "./session.js";
 
 declare global {
   namespace Express {

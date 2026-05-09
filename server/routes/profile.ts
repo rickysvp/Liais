@@ -1,7 +1,7 @@
 import { Router } from "express";
-import { prisma } from "../lib/db";
-import { profileUpdateSchema, profilePublishSchema } from "../schemas";
-import { authMiddleware, profileMiddleware } from "../lib/auth";
+import { prisma } from "../lib/db.js";
+import { profileUpdateSchema, profilePublishSchema } from "../schemas.js";
+import { authMiddleware, profileMiddleware } from "../lib/auth.js";
 
 export const profileRouter = Router();
 

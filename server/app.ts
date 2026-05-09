@@ -3,14 +3,14 @@ import cors from "cors";
 import helmet from "helmet";
 import "dotenv/config";
 
-import { onboardingRouter } from "./routes/onboarding";
-import { aiRouter } from "./routes/ai";
-import { systemRouter } from "./routes/system";
-import { profileRouter } from "./routes/profile";
-import { inboxRouter } from "./routes/inbox";
-import { chatRouter } from "./routes/chat";
-import { billingRouter, billingWebhookRouter } from "./routes/billing";
-import { generalLimiter } from "./lib/rateLimiter";
+import { onboardingRouter } from "./routes/onboarding.js";
+import { aiRouter } from "./routes/ai.js";
+import { systemRouter } from "./routes/system.js";
+import { profileRouter } from "./routes/profile.js";
+import { inboxRouter } from "./routes/inbox.js";
+import { chatRouter } from "./routes/chat.js";
+import { billingRouter, billingWebhookRouter } from "./routes/billing.js";
+import { generalLimiter } from "./lib/rateLimiter.js";
 
 export function createApp() {
   const app = express();

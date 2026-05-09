@@ -1,12 +1,12 @@
 import { Router } from "express";
-import { prisma } from "../lib/db";
-import { generateJsonObject, isAIConfigured } from "../lib/ai";
-import { visitorIntakeSchema } from "../schemas";
-import { buildPromptSection } from "../lib/promptSanitizer";
-import { getAvailableCredits, isPaidSubscriptionStatus } from "../lib/usage";
-import { authMiddleware, profileMiddleware } from "../lib/auth";
+import { prisma } from "../lib/db.js";
+import { generateJsonObject, isAIConfigured } from "../lib/ai.js";
+import { visitorIntakeSchema } from "../schemas.js";
+import { buildPromptSection } from "../lib/promptSanitizer.js";
+import { getAvailableCredits, isPaidSubscriptionStatus } from "../lib/usage.js";
+import { authMiddleware, profileMiddleware } from "../lib/auth.js";
 import type { Profile } from "@prisma/client";
-import { parseScreeningOutput } from "../lib/aiSchemas";
+import { parseScreeningOutput } from "../lib/aiSchemas.js";
 
 export const inboxRouter = Router();
 

@@ -1,7 +1,7 @@
 import { Router } from "express";
-import { generateJsonObject, isAIConfigured } from "../lib/ai";
-import { aiLimiter } from "../lib/rateLimiter";
-import { buildPromptSection } from "../lib/promptSanitizer";
+import { generateJsonObject, isAIConfigured } from "../lib/ai.js";
+import { aiLimiter } from "../lib/rateLimiter.js";
+import { buildPromptSection } from "../lib/promptSanitizer.js";
 
 export const aiRouter = Router();
 

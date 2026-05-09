@@ -1,6 +1,6 @@
 import { Router } from "express";
-import { prisma } from "../lib/db";
-import { onboardingDraftSchema } from "../schemas";
+import { prisma } from "../lib/db.js";
+import { onboardingDraftSchema } from "../schemas.js";
 
 export const onboardingRouter = Router();
 
