@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { prisma } from "./db";
+import { getAuthenticatedUserId } from "./session";
 
 declare global {
   namespace Express {
@@ -11,7 +12,7 @@ declare global {
 }
 
 export async function authMiddleware(req: Request, res: Response, next: NextFunction) {
-  const userId = req.headers["x-user-id"] as string;
+  const userId = await getAuthenticatedUserId(req);
 
   if (!userId) {
     res.status(401).json({ error: "Authentication required. Provide x-user-id header." });
@@ -50,7 +51,7 @@ export async function profileMiddleware(req: Request, res: Response, next: NextF
 
 export function optionalAuthMiddleware(req: Request, res: Response, next: NextFunction) {
   const userId = req.headers["x-user-id"] as string;
-  if (userId) {
+  if (userId && process.env.NODE_ENV !== "production") {
     req.userId = userId;
   }
   next();

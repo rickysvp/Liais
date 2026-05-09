@@ -1,47 +1,19 @@
-import express, { Request, Response, NextFunction } from "express";
+import express from "express";
 import { createServer as createViteServer } from "vite";
-import cors from "cors";
 import path from "path";
 import process from "process";
 import fs from "fs";
-import helmet from "helmet";
 import "dotenv/config";
 import { fileURLToPath } from 'url';
+import { prisma } from "./server/lib/db";
+import { createApp } from "./server/app";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Import Routers
-import { onboardingRouter } from "./server/routes/onboarding";
-import { aiRouter } from "./server/routes/ai";
-import { systemRouter } from "./server/routes/system";
-import { profileRouter } from "./server/routes/profile";
-import { inboxRouter } from "./server/routes/inbox";
-import { chatRouter } from "./server/routes/chat";
-import { generalLimiter } from "./server/lib/rateLimiter";
-import { prisma } from "./server/lib/db";
-
 async function startServer() {
-  const app = express();
+  const app = createApp();
   const PORT = 3000;
-
-  app.use(helmet({
-    contentSecurityPolicy: false, // Vite might require inline scripts
-  }));
-
-  const allowedOrigin = process.env.FRONTEND_URL || "*";
-  app.use(cors({ origin: allowedOrigin }));
-  
-  app.use(generalLimiter);
-  app.use(express.json());
-
-  // === API ROUTES ===
-  app.use("/api", onboardingRouter);
-  app.use("/api", aiRouter);
-  app.use("/api", systemRouter);
-  app.use("/api", profileRouter);
-  app.use("/api", inboxRouter);
-  app.use("/api/chat", chatRouter);
 
   // === VITE / STATIC SERVING ===
   if (process.env.NODE_ENV !== "production") {
@@ -60,12 +32,6 @@ async function startServer() {
       res.sendFile(path.join(distPath, "index.html"));
     });
   }
-
-  // Global Error Handler
-  app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
-    console.error("[Global Error]", err);
-    res.status(500).json({ error: "Internal Server Error", message: process.env.NODE_ENV === "production" ? undefined : err.message });
-  });
 
   const server = app.listen(PORT, "0.0.0.0", () => {
     console.log(`Server running on http://localhost:${PORT}`);

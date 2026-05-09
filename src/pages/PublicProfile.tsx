@@ -81,7 +81,7 @@ export default function PublicProfile() {
         contactInfo: visitor.email || visitor.linkedin || visitor.whatsapp || visitor.website || "No contact info provided"
       };
       
-      await fetch(`/api/intake/${profile.id}`, {
+      await fetch(`/api/p/${slug}/intake`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -476,4 +476,3 @@ export default function PublicProfile() {
     </div>
   );
 }
-

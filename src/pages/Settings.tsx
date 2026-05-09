@@ -3,6 +3,7 @@ import { useLanguage } from "../contexts/LanguageContext";
 import { toast } from "sonner";
 import { Shield, User, Zap, Lock, Trash2, Plus, Brain, Globe, Eye, Settings as SettingsIcon } from "lucide-react";
 import type { Profile, ProfileBoundary } from "@prisma/client";
+import { authHeaders, jsonHeaders } from "../lib/api";
 
 const translations = {
   en: {
@@ -70,7 +71,7 @@ export default function Settings() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    fetch("/api/me/profile")
+    fetch("/api/me/profile", { headers: authHeaders() })
       .then((r) => r.json())
       .then((data) => {
         setProfile(data);
@@ -85,7 +86,7 @@ export default function Settings() {
     try {
       const res = await fetch("/api/me/profile", {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        headers: jsonHeaders(),
         body: JSON.stringify({ ...profile, boundaries })
       });
       if (res.ok) {

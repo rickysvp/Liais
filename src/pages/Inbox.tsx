@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useLanguage } from "../contexts/LanguageContext";
 import { Shield, Zap, Clock, User, ArrowRight, CheckCircle2, MessageSquare, Mail, Calendar, Archive, EyeOff, Brain, TrendingUp } from "lucide-react";
+import { authHeaders, jsonHeaders } from "../lib/api";
 
 import { translations } from '../i18n/inbox';
 import { getMockBriefs } from '../mocks/inboxMocks';
@@ -56,7 +57,7 @@ export default function Inbox() {
   };
 
   useEffect(() => {
-    fetch("/api/inbox")
+    fetch("/api/inbox", { headers: authHeaders() })
       .then((r) => r.json())
       .then((data) => {
         const items = Array.isArray(data) ? data : (data.data || []);
@@ -77,9 +78,9 @@ export default function Inbox() {
   const handleUpdateStatus = async (status: string) => {
     if (!selectedId || selectedId.startsWith("mock-")) return;
     try {
-      await fetch(`/api/inbox/${selectedId}`, {
+      await fetch(`/api/inbox/${selectedId}/status`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        headers: jsonHeaders(),
         body: JSON.stringify({ status }),
       });
       setConversations((prev) => prev.map((c) => (c.id === selectedId ? { ...c, status } : c)));

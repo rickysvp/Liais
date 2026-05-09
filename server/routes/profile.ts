@@ -77,7 +77,21 @@ profileRouter.get("/p/:slug", async (req, res) => {
       res.status(404).json({ error: "Not found" });
       return;
     }
-    res.json(profile);
+    if (!profile.isPublished) {
+      res.status(404).json({ error: "Not found" });
+      return;
+    }
+    res.json({
+      slug: profile.slug,
+      displayName: profile.displayName,
+      headline: profile.headline,
+      generatedIntro: profile.generatedIntro,
+      generatedWelcomeMessage: profile.generatedWelcomeMessage,
+      generatedContactScopeText: profile.generatedContactScopeText,
+      linkedinUrl: profile.linkedinUrl,
+      twitterUrl: profile.twitterUrl,
+      websiteUrl: profile.websiteUrl,
+    });
   } catch (e: any) {
     console.error("[Profile Get By Slug Error]", e.message);
     res.status(500).json({ error: "Failed to fetch profile" });

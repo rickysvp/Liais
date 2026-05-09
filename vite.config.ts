@@ -24,7 +24,6 @@ export default defineConfig(async ({mode}) => {
   return {
     plugins,
     define: {
-      'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY),
       '__APP_VERSION__': JSON.stringify("0.0.0"),
     },
     resolve: {

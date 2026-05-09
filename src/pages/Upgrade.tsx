@@ -1,5 +1,7 @@
+import { useEffect, useState } from "react";
 import { useLanguage } from "../contexts/LanguageContext";
 import { Zap, Shield, Globe, Clock, CheckCircle2, ArrowRight, TrendingUp, HelpCircle, CreditCard, Receipt, ExternalLink, RefreshCw, ShoppingCart, Coins } from "lucide-react";
+import { authHeaders, jsonHeaders } from "../lib/api";
 
 const translations = {
   en: {
@@ -70,6 +72,57 @@ export default function Upgrade() {
   const lang = language as 'en' | 'zh';
   const t = translations[lang] || translations.en;
   const faqs = FAQ_ITEMS[lang] || FAQ_ITEMS.en;
+  const [billing, setBilling] = useState<any>(null);
+  const [loadingAction, setLoadingAction] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch("/api/billing/summary", { headers: authHeaders() })
+      .then((r) => r.ok ? r.json() : null)
+      .then(setBilling)
+      .catch(() => setBilling(null));
+  }, []);
+
+  const creditTotal = (billing?.monthlyCredits || 0) + (billing?.purchasedCredits || 0);
+  const availableCredits = billing?.availableCredits || 0;
+  const usedCredits = Math.max(0, creditTotal - availableCredits);
+  const usagePercent = creditTotal > 0 ? Math.min(100, Math.round((usedCredits / creditTotal) * 100)) : 0;
+  const renewalDate = billing?.currentPeriodEnd
+    ? new Intl.DateTimeFormat(language === "zh" ? "zh-CN" : "en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      }).format(new Date(billing.currentPeriodEnd))
+    : "Not scheduled";
+
+  const startCheckout = async (priceLookupKey: string) => {
+    setLoadingAction(priceLookupKey);
+    try {
+      const res = await fetch("/api/billing/checkout-session", {
+        method: "POST",
+        headers: jsonHeaders(),
+        body: JSON.stringify({ priceLookupKey }),
+      });
+      const data = await res.json();
+      if (res.ok && data.url) window.location.href = data.url;
+    } finally {
+      setLoadingAction(null);
+    }
+  };
+
+  const openPortal = async () => {
+    setLoadingAction("portal");
+    try {
+      const res = await fetch("/api/billing/portal-session", {
+        method: "POST",
+        headers: jsonHeaders(),
+        body: JSON.stringify({ returnUrl: window.location.href }),
+      });
+      const data = await res.json();
+      if (res.ok && data.url) window.location.href = data.url;
+    } finally {
+      setLoadingAction(null);
+    }
+  };
 
   const Metric = ({ label, value }: { label: string, value: string }) => (
     <div className="flex flex-col">
@@ -99,20 +152,20 @@ export default function Upgrade() {
               <span className="text-[11px] font-black text-slate-900 uppercase tracking-[0.3em]">{t.usage}</span>
               <span className="px-2.5 py-1 bg-emerald-500 text-white text-[9px] font-black rounded-full uppercase tracking-widest flex items-center gap-1.5 shadow-sm">
                  <div className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
-                 Active
+                 {billing?.status || "Inactive"}
               </span>
            </div>
            <div className="grid grid-cols-2 gap-8">
-              <Metric label="Current Plan" value="Free" />
-              <Metric label="Uptime" value="99.9%" />
+              <Metric label="Current Plan" value={billing?.planName || "Free"} />
+              <Metric label="AI Credits" value={`${availableCredits}`} />
            </div>
            <div className="space-y-2">
               <div className="flex justify-between text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                 <span>8 / 50 Credits</span>
-                 <span>16%</span>
+                 <span>{usedCredits} / {creditTotal || 0} Credits</span>
+                 <span>{usagePercent}%</span>
               </div>
               <div className="h-2 w-full bg-slate-200 rounded-full overflow-hidden shadow-inner">
-                 <div className="h-full bg-slate-900 w-[16%] transition-all duration-1000" />
+                 <div className="h-full bg-slate-900 transition-all duration-1000" style={{ width: `${usagePercent}%` }} />
               </div>
            </div>
         </div>
@@ -130,7 +183,7 @@ export default function Upgrade() {
                  </div>
                  <h2 className="text-2xl font-serif font-black text-[#111]">{t.billingTitle}</h2>
               </div>
-              <button className="flex items-center gap-2 text-[11px] font-black text-slate-400 uppercase tracking-widest hover:text-slate-900 transition-all group">
+              <button onClick={openPortal} disabled={loadingAction === "portal"} className="flex items-center gap-2 text-[11px] font-black text-slate-400 uppercase tracking-widest hover:text-slate-900 transition-all group disabled:opacity-50">
                  Billing Portal <ExternalLink className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
               </button>
            </div>
@@ -140,18 +193,18 @@ export default function Upgrade() {
                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">{t.billingStatus}</span>
                  <div className="flex items-center gap-2">
                     <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
-                    <span className="text-[16px] font-bold text-slate-900">{t.billingActive}</span>
+                 <span className="text-[16px] font-bold text-slate-900">{billing?.status || "inactive"}</span>
                  </div>
               </div>
               <div className="space-y-2">
                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">{t.billingNext}</span>
-                 <span className="text-[16px] font-bold text-slate-900">May 24, 2026</span>
+                 <span className="text-[16px] font-bold text-slate-900">{renewalDate}</span>
               </div>
               <div className="space-y-2">
                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">{t.billingMethod}</span>
                  <div className="flex items-center gap-2">
                     <CreditCard className="w-4 h-4 text-slate-400" />
-                    <span className="text-[16px] font-bold text-slate-900">Visa ending in •••• 4242</span>
+                    <span className="text-[16px] font-bold text-slate-900">Managed in Stripe</span>
                  </div>
               </div>
            </div>
@@ -170,22 +223,21 @@ export default function Upgrade() {
                    {t.creditDesc}
                  </p>
               </div>
-              <button className="mt-10 w-full h-14 bg-[#D2E823] text-slate-900 rounded-2xl font-black text-[13px] uppercase tracking-widest hover:scale-105 transition-all shadow-xl active:scale-95">
-                 {t.reloadButton}
+              <button onClick={() => startCheckout("credit_pack_small")} disabled={loadingAction === "credit_pack_small"} className="mt-10 w-full h-14 bg-[#D2E823] text-slate-900 rounded-2xl font-black text-[13px] uppercase tracking-widest hover:scale-105 transition-all shadow-xl active:scale-95 disabled:opacity-60">
+                 {loadingAction === "credit_pack_small" ? "Opening Stripe..." : t.reloadButton}
               </button>
            </div>
 
            <div className="lg:col-span-8 grid grid-cols-1 md:grid-cols-3 gap-6">
               {[
-                { amount: "100", price: "$19", color: "bg-slate-100" },
-                { amount: "500", price: "$79", color: "bg-slate-100 border-2 border-slate-900" },
-                { amount: "2000", price: "$249", color: "bg-slate-100" }
+                { amount: "25", price: "$19", color: "bg-slate-100", key: "credit_pack_small" },
+                { amount: "100", price: "$79", color: "bg-slate-100 border-2 border-slate-900", key: "credit_pack_medium" },
               ].map((pack, i) => (
-                <div key={i} className={`p-8 rounded-[32px] flex flex-col items-center justify-center gap-2 group hover:bg-white hover:shadow-xl transition-all cursor-pointer ${pack.color}`}>
+                <button key={i} onClick={() => startCheckout(pack.key)} disabled={loadingAction === pack.key} className={`p-8 rounded-[32px] flex flex-col items-center justify-center gap-2 group hover:bg-white hover:shadow-xl transition-all cursor-pointer disabled:opacity-60 ${pack.color}`}>
                    <span className="text-3xl font-black text-slate-900">{pack.amount}</span>
                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Credits</span>
                    <div className="text-xl font-bold text-slate-900">{pack.price}</div>
-                </div>
+                </button>
               ))}
            </div>
         </section>
@@ -219,7 +271,7 @@ export default function Upgrade() {
                  <span className="text-4xl font-black text-[#111]">$29</span>
                  <span className="text-[12px] font-bold text-slate-400 uppercase tracking-widest">{t.perMonth}</span>
                </div>
-               <button className="w-full py-4 bg-slate-900 text-white rounded-2xl font-black text-[12px] uppercase tracking-widest hover:bg-slate-800 transition-all flex items-center justify-center gap-2 shadow-lg mt-auto">
+               <button onClick={() => startCheckout("starter_monthly")} disabled={loadingAction === "starter_monthly"} className="w-full py-4 bg-slate-900 text-white rounded-2xl font-black text-[12px] uppercase tracking-widest hover:bg-slate-800 transition-all flex items-center justify-center gap-2 shadow-lg mt-auto disabled:opacity-60">
                  {t.upgradePremium} <Zap className="w-3.5 h-3.5 text-[#D2E823]" />
                </button>
              </div>
@@ -237,7 +289,7 @@ export default function Upgrade() {
                    <span className="text-4xl font-black text-[#D2E823]">$99</span>
                    <span className="text-[12px] font-bold text-slate-500 uppercase tracking-widest">{t.perMonth}</span>
                  </div>
-                 <button className="w-full py-4 bg-white text-slate-900 rounded-2xl font-black text-[12px] uppercase tracking-widest hover:bg-slate-50 transition-all flex items-center justify-center gap-2 shadow-lg mt-auto">
+                 <button onClick={() => startCheckout("pro_monthly")} disabled={loadingAction === "pro_monthly"} className="w-full py-4 bg-white text-slate-900 rounded-2xl font-black text-[12px] uppercase tracking-widest hover:bg-slate-50 transition-all flex items-center justify-center gap-2 shadow-lg mt-auto disabled:opacity-60">
                    {t.contactSales} <ArrowRight className="w-3.5 h-3.5" />
                  </button>
                </div>

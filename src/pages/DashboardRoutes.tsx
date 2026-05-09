@@ -8,6 +8,7 @@ import { Copy, InboxIcon, Settings, User, Globe, Send, Loader2, TrendingUp, User
 import { useEffect, useState, useRef } from "react";
 import { useLanguage } from "../contexts/LanguageContext";
 import { translations } from '../i18n/dashboard';
+import { authHeaders, jsonHeaders } from "../lib/api";
 
 interface Profile {
   displayName: string;
@@ -323,12 +324,12 @@ function DashboardHome() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    fetch("/api/me/profile")
+    fetch("/api/me/profile", { headers: authHeaders() })
       .then(r => r.ok ? r.json() : null)
       .then(setProfile)
       .catch(() => setProfile(null));
 
-    fetch("/api/chat")
+    fetch("/api/chat", { headers: authHeaders() })
       .then(res => res.json())
       .then(data => {
         const msgs = Array.isArray(data) ? data : (data.data || []);
@@ -338,7 +339,7 @@ function DashboardHome() {
         const hasBriefing = msgs.some(m => m.content.includes('"type":"briefing"'));
         if (!hasBriefing) {
           setLoading(true);
-          fetch("/api/chat/greeting", { method: "POST" })
+          fetch("/api/chat/greeting", { method: "POST", headers: authHeaders() })
             .then(r => r.json())
             .then(msg => {
               setMessages(prev => [...prev, msg]);
@@ -365,7 +366,7 @@ function DashboardHome() {
     try {
       const res = await fetch("/api/chat/message", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: jsonHeaders(),
         body: JSON.stringify({ message: input })
       });
       const data = await res.json();
@@ -416,7 +417,7 @@ function DashboardHome() {
           <button 
             onClick={() => {
               setLoading(true);
-              fetch("/api/chat/greeting", { method: "POST" })
+              fetch("/api/chat/greeting", { method: "POST", headers: authHeaders() })
                 .then(r => r.json())
                 .then(msg => {
                   setMessages(prev => [...prev, msg]);

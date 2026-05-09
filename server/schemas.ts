@@ -23,8 +23,18 @@ export const visitorIntakeSchema = z.object({
   visitorReason: z.string().max(5000).optional().nullable(),
   visitorIntentCategory: z.string().max(100).optional().nullable(),
   requestedNextStep: z.string().max(500).optional().nullable(),
+  email: z.string().email().max(320).optional().or(z.literal("")).nullable(),
+  linkedin: z.string().max(500).optional().nullable(),
+  whatsapp: z.string().max(100).optional().nullable(),
+  website: z.string().max(500).optional().nullable(),
   contactInfo: z.string().max(500).optional().nullable(),
+  consentToContact: z.literal(true),
   transcript: z.array(z.unknown()).optional().nullable()
+}).refine((data) => {
+  return Boolean(data.contactInfo || data.email || data.linkedin || data.whatsapp || data.website);
+}, {
+  message: "At least one contact method is required",
+  path: ["contactInfo"],
 });
 
 export const onboardingDraftSchema = z.object({

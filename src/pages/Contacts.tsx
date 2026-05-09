@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useLanguage } from "../contexts/LanguageContext";
 import { ArrowRight, UserCheck, Users, Search, Filter, ShieldCheck, Mail, Globe } from "lucide-react";
+import { authHeaders } from "../lib/api";
 
 const translations = {
   en: {
@@ -30,7 +31,7 @@ export default function Contacts() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    fetch("/api/inbox")
+    fetch("/api/inbox", { headers: authHeaders() })
       .then(r => r.json())
       .then(data => {
         const items = Array.isArray(data) ? data : (data.data || []);
