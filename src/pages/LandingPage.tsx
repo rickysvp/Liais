@@ -107,7 +107,7 @@ export default function LandingPage() {
              </div>
              <Link 
                 to="/onboarding"
-                className="h-[4.5rem] sm:h-auto py-4 px-8 sm:px-10 rounded-2xl sm:rounded-full bg-[#D2E823] hover:bg-[#C2D812] text-[#111] flex items-center justify-center font-bold text-lg transition-transform hover:scale-[1.02] active:scale-95 shadow-md whitespace-nowrap"
+                className="h-[4.5rem] sm:h-auto py-4 px-8 sm:px-10 rounded-2xl sm:rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white flex items-center justify-center font-bold text-lg transition-transform hover:scale-[1.02] active:scale-95 shadow-md whitespace-nowrap"
              >
                 {t.createLiais}
              </Link>

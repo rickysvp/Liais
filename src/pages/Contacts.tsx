@@ -1,25 +1,24 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
 import { useLanguage } from "../contexts/LanguageContext";
+import { ArrowRight, UserCheck, Users, Search, Filter, ShieldCheck, Mail, Globe } from "lucide-react";
 
 const translations = {
   en: {
-    contactsTitle: "Contacts",
-    contactsDesc: "Your accepted business connections.",
-    noContactsYet: "No accepted contacts yet.",
+    contactsTitle: "High-Signal Connections",
+    contactsDesc: "Elite relationships vetted and managed by your AI secretary.",
+    noContactsYet: "No verified connections in the current cycle.",
     anonymous: "Anonymous",
-    contactInfoLabel: "Contact Info",
-    notAvailable: "N/A"
+    contactInfoLabel: "Executive Intelligence Summary",
+    totalConnections: "Active Intelligence Nodes"
   },
   zh: {
-    contactsTitle: "联系人",
-    contactsDesc: "您已接受的商业人脉。",
-    noContactsYet: "暂无已接受的联系人。",
+    contactsTitle: "高价值人脉",
+    contactsDesc: "由您的 AI 秘书筛选并管理的精英商业关系。",
+    noContactsYet: "本周期内暂无已验证的联系人。",
     anonymous: "匿名",
-    contactInfoLabel: "联系信息",
-    notAvailable: "无"
+    contactInfoLabel: "执行官情报摘要",
+    totalConnections: "活跃情报节点"
   }
 };
 
@@ -34,53 +33,117 @@ export default function Contacts() {
     fetch("/api/inbox")
       .then(r => r.json())
       .then(data => {
-        if (Array.isArray(data)) {
-          setContacts(data.filter(c => c.status === "accepted"));
-        } else {
-          console.error("Failed to fetch contacts", data);
-        }
-      });
+        const items = Array.isArray(data) ? data : (data.data || []);
+        setContacts(items.filter((c: any) => c.status === "accepted" || c.status === "replied" || c.status === "Ready to send"));
+      })
+      .catch(() => {});
   }, []);
 
   return (
-    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2">
-      <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
-        <div>
-          <h1 className="text-4xl font-bold font-[family-name:var(--font-heading)] text-slate-900 tracking-tight">{t.contactsTitle}</h1>
-          <p className="text-slate-500 text-lg mt-2 font-medium">{t.contactsDesc}</p>
+    <div className="h-full flex flex-col bg-slate-50 overflow-hidden animate-in fade-in duration-700">
+      
+      {/* Executive Header */}
+      <div className="shrink-0 bg-white border-b border-slate-200 px-10 py-8 flex flex-col md:flex-row md:items-end justify-between gap-8 z-10 shadow-sm">
+        <div className="space-y-4">
+           <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-slate-900 rounded-2xl flex items-center justify-center text-white shadow-xl">
+                <Users className="w-6 h-6" />
+              </div>
+              <h1 className="text-4xl font-serif font-black text-[#111] tracking-tighter leading-none">{t.contactsTitle}</h1>
+           </div>
+           <p className="text-slate-400 text-[15px] font-medium max-w-xl italic">
+             {t.contactsDesc}
+           </p>
+        </div>
+
+        <div className="flex items-center gap-6 pb-2">
+           <div className="flex flex-col items-end">
+              <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1">{t.totalConnections}</span>
+              <div className="flex items-center gap-2">
+                 <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
+                 <span className="text-2xl font-black text-slate-900">{contacts.length}</span>
+              </div>
+           </div>
+           <div className="w-px h-10 bg-slate-100 mx-2" />
+           <div className="flex items-center gap-2">
+              <button className="w-12 h-12 rounded-xl border border-slate-200 flex items-center justify-center text-slate-400 hover:text-slate-900 hover:bg-slate-50 transition-all">
+                 <Search className="w-5 h-5" />
+              </button>
+              <button className="w-12 h-12 rounded-xl border border-slate-200 flex items-center justify-center text-slate-400 hover:text-slate-900 hover:bg-slate-50 transition-all">
+                 <Filter className="w-5 h-5" />
+              </button>
+           </div>
         </div>
       </div>
 
-      {contacts.length === 0 ? (
-        <div className="text-center p-16 bg-white border border-slate-200 rounded-3xl border-dashed">
-          <p className="text-slate-500 font-medium">{t.noContactsYet}</p>
-        </div>
-      ) : (
-        <div className="space-y-4">
-          {contacts.map(conv => (
-            <Card key={conv.id} className="cursor-pointer group hover:border-slate-400 hover:shadow-md transition-all rounded-2xl border-slate-200 shadow-sm" onClick={() => navigate(`/dashboard/inbox/${conv.id}`)}>
-              <CardContent className="p-6">
-                 <div className="flex justify-between items-start mb-4">
-                   <div>
-                     <h3 className="font-bold text-xl font-[family-name:var(--font-heading)] text-slate-900 group-hover:text-slate-700 transition-colors">{conv.visitorName || t.anonymous}</h3>
-                     <p className="text-sm text-slate-500 font-medium mt-1">{conv.visitorCompany} • {conv.visitorIntentCategory}</p>
-                   </div>
-                   <Badge className={`px-3 py-1 text-sm font-medium rounded-full ${conv.qualificationLevel === 'high fit' ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-600'}`} variant="outline">
-                     {conv.qualificationLevel}
-                   </Badge>
-                 </div>
-                 <div className="bg-slate-50 p-4 rounded-xl text-sm text-slate-700 border border-slate-100 flex items-start space-x-3">
-                   <div className="w-6 h-6 rounded-full bg-[#D2E823] text-slate-900 flex items-center justify-center font-bold shrink-0 mt-0.5"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg></div>
-                   <div>
-                     <span className="font-semibold text-slate-900 block mb-1">{t.contactInfoLabel}</span>
-                     <span className="leading-relaxed text-slate-600">{conv.contactInfo || t.notAvailable}</span>
-                   </div>
-                 </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      )}
+      {/* Main Content Area */}
+      <div className="flex-1 overflow-y-auto px-10 py-12">
+        {contacts.length === 0 ? (
+          <div className="flex flex-col items-center justify-center text-center p-24 bg-white border border-slate-200 rounded-[48px] border-dashed">
+            <div className="w-20 h-20 rounded-[32px] bg-slate-50 flex items-center justify-center mb-8 text-slate-200">
+              <UserCheck className="w-10 h-10" />
+            </div>
+            <p className="text-slate-400 font-black uppercase tracking-[0.3em] text-[12px]">{t.noContactsYet}</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8 max-w-7xl mx-auto">
+            {contacts.map(conv => (
+              <button 
+                key={conv.id} 
+                className="flex flex-col bg-white border border-slate-200 p-10 rounded-[40px] shadow-sm hover:shadow-2xl hover:-translate-y-2 transition-all group text-left relative overflow-hidden" 
+                onClick={() => navigate(`/dashboard/inbox`)}
+              >
+                <div className="absolute top-0 right-0 p-8 opacity-0 group-hover:opacity-100 transition-all group-hover:translate-x-2">
+                  <ArrowRight className="w-6 h-6 text-slate-900" />
+                </div>
+                
+                <div className="flex items-center gap-6 mb-8">
+                  <div className="w-16 h-16 rounded-[24px] bg-slate-900 flex items-center justify-center text-white font-black text-2xl shadow-xl group-hover:bg-[#D2E823] group-hover:text-black transition-all">
+                    {(conv.visitorName || conv.name || "A")[0]}
+                  </div>
+                  <div className="min-w-0">
+                     <h3 className="font-serif font-black text-2xl text-[#111] tracking-tight truncate leading-tight">
+                       {conv.visitorName || conv.name || t.anonymous}
+                     </h3>
+                     <div className="flex items-center gap-2 mt-1">
+                        <span className="text-[11px] font-black text-slate-400 uppercase tracking-widest truncate">
+                          {conv.visitorCompany || conv.company}
+                        </span>
+                        <div className="w-1 h-1 rounded-full bg-slate-200" />
+                        <span className="text-[11px] font-bold text-slate-500 italic">
+                          {conv.visitorRole || "Executive"}
+                        </span>
+                     </div>
+                  </div>
+                </div>
+
+                <div className="space-y-6 flex-1">
+                  <div className="bg-slate-50/80 p-6 rounded-[28px] border border-slate-100/50 group-hover:bg-white group-hover:border-slate-200 transition-all">
+                     <div className="flex items-center gap-2 mb-3">
+                        <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
+                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">{t.contactInfoLabel}</span>
+                     </div>
+                     <p className="text-[14px] text-slate-700 leading-relaxed font-medium italic line-clamp-3">
+                       "{conv.summaryText || conv.visitorReason || "Active dialogue initiated by Liais Intelligence Engine."}"
+                     </p>
+                  </div>
+                  
+                  <div className="flex items-center justify-between pt-2">
+                     <div className="flex items-center gap-2.5">
+                       <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]"></div>
+                       <span className="text-[11px] font-black text-slate-900 uppercase tracking-widest">Verified Intelligence Node</span>
+                     </div>
+                     <div className="flex items-center gap-3">
+                        <Mail className="w-4 h-4 text-slate-300 group-hover:text-slate-900 transition-colors" />
+                        <Globe className="w-4 h-4 text-slate-300 group-hover:text-slate-900 transition-colors" />
+                     </div>
+                  </div>
+                </div>
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

@@ -1,291 +1,271 @@
-import { Button } from "@/components/ui/button";
 import { useLanguage } from "../contexts/LanguageContext";
+import { Zap, Shield, Globe, Clock, CheckCircle2, ArrowRight, TrendingUp, HelpCircle, CreditCard, Receipt, ExternalLink, RefreshCw, ShoppingCart, Coins } from "lucide-react";
 
 const translations = {
   en: {
-    title: "Upgrade your Liaison",
-    subtitle:
-      "Unlock more AI capabilities, increased limits, and deep calendar integration to fully automate your inbound screening.",
-    professional: "Professional",
-    proDesc: "For independent creators and founders",
-    perMonth: "per month",
-    proFeature1: "200 AI Screenings per month",
-    proFeature2: "Auto-drafted replies and calendar invites",
-    proFeature3: "Custom secretary tone and instructions",
-    proFeature4: "Premium domain link (liais.ai/you)",
-    upgradePro: "Upgrade to Professional",
+    title: "Billing & Subscriptions",
+    subtitle: "Manage your executive intelligence resources, settlement history, and operational tiers.",
+    billingTitle: "Billing Ledger",
+    billingStatus: "Account Status",
+    billingActive: "Operational / Active",
+    billingNext: "Next Synchronization",
+    billingMethod: "Settlement Method",
+    creditTitle: "Intelligence Credits",
+    creditDesc: "Immediate reload for high-volume screening periods.",
+    reloadButton: "Purchase Credits",
+    tiersTitle: "Intelligence Tiers",
+    free: "Free Engine",
+    freeDesc: "Core screening for personal use",
+    premium: "Premium",
+    premiumDesc: "Advanced automation for elite founders",
     business: "Business",
-    bizDesc: "For high-volume teams and executives",
-    bizFeature1: "1,000 AI Screenings per month",
-    bizFeature2: "Automated Webhook Hand-off (Zapier, Make)",
-    bizFeature3: "Custom branding and whitelabeling",
-    bizFeature4: "Priority concierge support",
-    contactSales: "Contact Sales",
-    currentPlan: "Your current plan is",
-    free: "Free",
-    creditsRemaining: "You have 8 credits remaining this month.",
+    bizDesc: "High-precision logic for executive teams",
+    perMonth: "/ month",
+    upgradePremium: "Elevate to Premium",
+    contactSales: "Deploy Business",
+    usage: "Resource Consumption",
+    faqTitle: "Intelligence FAQ",
   },
   zh: {
-    title: "升级您的 Liaison",
-    subtitle:
-      "解锁更多 AI 能力、提高额度限制并深度集成日历，全面自动化您的收件箱筛选。",
-    professional: "专业版",
-    proDesc: "适合独立创作者和创始人",
-    perMonth: "每月",
-    proFeature1: "每月 200 次 AI 筛选",
-    proFeature2: "自动起草回复和日历邀请",
-    proFeature3: "自定义秘书语气和指令",
-    proFeature4: "高级域名链接 (liais.ai/you)",
-    upgradePro: "升级至专业版",
+    title: "账单与订阅",
+    subtitle: "管理您的执行官情报资源、结算历史和运行等级。",
+    billingTitle: "账务清单",
+    billingStatus: "账户状态",
+    billingActive: "运行中 / 已激活",
+    billingNext: "下一次同步",
+    billingMethod: "结算方式",
+    creditTitle: "情报积分充值",
+    creditDesc: "为高流量筛选时期提供即时资源补充。",
+    reloadButton: "购买积分",
+    tiersTitle: "运行等级切换",
+    free: "免费引擎",
+    freeDesc: "个人使用的核心筛选功能",
+    premium: "高级版",
+    premiumDesc: "为精英创始人提供的进阶自动化",
     business: "企业版",
-    bizDesc: "适合高容量团队和高管",
-    bizFeature1: "每月 1,000 次 AI 筛选",
-    bizFeature2: "自动化 Webhook 移交 (Zapier, Make)",
-    bizFeature3: "自定义品牌和白标",
-    bizFeature4: "优先专属客服支持",
-    contactSales: "联系销售",
-    currentPlan: "您当前的计划是",
-    free: "免费版",
-    creditsRemaining: "本月还剩 8 个可用积分。",
+    bizDesc: "为高管团队提供的高精度逻辑",
+    perMonth: "/ 每月",
+    upgradePremium: "升级至高级版",
+    contactSales: "部署企业版",
+    usage: "资源消耗情况",
+    faqTitle: "情报常见问题",
   },
+};
+
+const FAQ_ITEMS = {
+  en: [
+    { q: "How does the AI credit system work?", a: "Each credit represents one complete analysis of an inbound visitor, including intent detection and summary generation." },
+    { q: "Can I change plans mid-cycle?", a: "Yes, upgrades are processed immediately with pro-rated adjustments applied to your next settlement." },
+    { q: "What happens if I exceed my limit?", a: "Your secretary will transition to a basic 'Queue Mode' until the next cycle or a tier upgrade is initiated." }
+  ],
+  zh: [
+    { q: "AI 积分系统是如何运作的？", a: "每一个积分代表对一名访客的完整分析，包括意图识别和摘要生成。" },
+    { q: "我可以在周期中更换计划吗？", a: "可以，升级会立即生效，差额将按比例在下一次结算中调整。" },
+    { q: "如果超过限额会发生什么？", a: "您的秘书将转入基础的“排队模式”，直到下一个周期开始或进行等级升级。" }
+  ]
 };
 
 export default function Upgrade() {
   const { language } = useLanguage();
-  const t =
-    translations[language as keyof typeof translations] || translations.en;
+  const lang = language as 'en' | 'zh';
+  const t = translations[lang] || translations.en;
+  const faqs = FAQ_ITEMS[lang] || FAQ_ITEMS.en;
+
+  const Metric = ({ label, value }: { label: string, value: string }) => (
+    <div className="flex flex-col">
+      <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{label}</span>
+      <span className="text-xl font-black text-slate-900">{value}</span>
+    </div>
+  );
 
   return (
-    <div className="flex flex-col pt-4 animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-5xl mx-auto mb-12">
-      <div className="mb-10 lg:mb-16">
-        <h1 className="text-3xl font-bold font-serif text-[#111] tracking-tight">
-          {t.title}
-        </h1>
-        <p className="text-slate-500 text-[15px] mt-3 max-w-2xl leading-relaxed">
-          {t.subtitle}
-        </p>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8">
-        {/* Pro Plan */}
-        <div className="bg-white border border-slate-200 rounded-[2rem] p-8 lg:p-10 shadow-[0_2px_40px_rgb(0,0,0,0.03)] flex flex-col relative overflow-hidden group hover:border-[#111] hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
-          <div className="absolute top-0 left-0 w-full h-1.5 bg-[#111]"></div>
-
-          <div className="flex justify-between items-start mb-6">
-            <div>
-              <h2 className="text-2xl font-bold text-[#111] mb-2 tracking-tight">
-                {t.professional}
-              </h2>
-              <p className="text-[13px] text-slate-500 font-medium">
-                {t.proDesc}
-              </p>
-            </div>
-            <div className="text-right">
-              <span className="text-3xl font-bold text-[#111]">$29</span>
-              <span className="text-[13px] text-slate-400 font-medium block">
-                {t.perMonth}
-              </span>
-            </div>
-          </div>
-
-          <div className="w-full h-px bg-slate-100 my-6"></div>
-
-          <ul className="space-y-4 mb-8 flex-1">
-            <li className="flex items-start gap-3">
-              <div className="mt-0.5 shrink-0 w-5 h-5 rounded-full bg-slate-100 flex items-center justify-center">
-                <svg
-                  width="12"
-                  height="12"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="#111"
-                  strokeWidth="3"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <polyline points="20 6 9 17 4 12"></polyline>
-                </svg>
+    <div className="h-full flex flex-col bg-slate-50 overflow-hidden animate-in fade-in duration-700">
+      
+      {/* Executive Header */}
+      <div className="shrink-0 bg-white border-b border-slate-200 px-10 py-8 flex flex-col md:flex-row md:items-end justify-between gap-8 z-10 shadow-sm">
+        <div className="space-y-4">
+           <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-slate-900 rounded-2xl flex items-center justify-center text-white shadow-xl">
+                <Receipt className="w-6 h-6" />
               </div>
-              <span className="text-[14px] text-slate-700 font-medium">
-                {t.proFeature1}
-              </span>
-            </li>
-            <li className="flex items-start gap-3">
-              <div className="mt-0.5 shrink-0 w-5 h-5 rounded-full bg-slate-100 flex items-center justify-center">
-                <svg
-                  width="12"
-                  height="12"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="#111"
-                  strokeWidth="3"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <polyline points="20 6 9 17 4 12"></polyline>
-                </svg>
-              </div>
-              <span className="text-[14px] text-slate-700 font-medium">
-                {t.proFeature2}
-              </span>
-            </li>
-            <li className="flex items-start gap-3">
-              <div className="mt-0.5 shrink-0 w-5 h-5 rounded-full bg-slate-100 flex items-center justify-center">
-                <svg
-                  width="12"
-                  height="12"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="#111"
-                  strokeWidth="3"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <polyline points="20 6 9 17 4 12"></polyline>
-                </svg>
-              </div>
-              <span className="text-[14px] text-slate-700 font-medium">
-                {t.proFeature3}
-              </span>
-            </li>
-            <li className="flex items-start gap-3">
-              <div className="mt-0.5 shrink-0 w-5 h-5 rounded-full bg-slate-100 flex items-center justify-center">
-                <svg
-                  width="12"
-                  height="12"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="#111"
-                  strokeWidth="3"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <polyline points="20 6 9 17 4 12"></polyline>
-                </svg>
-              </div>
-              <span className="text-[14px] text-slate-700 font-medium">
-                {t.proFeature4}
-              </span>
-            </li>
-          </ul>
-
-          <Button className="w-full bg-[#111] hover:bg-slate-800 text-white rounded-xl h-12 text-[14px] font-bold shadow-md transition-transform group-hover:scale-[1.02]">
-            {t.upgradePro}
-          </Button>
+              <h1 className="text-4xl font-serif font-black text-[#111] tracking-tighter leading-none">{t.title}</h1>
+           </div>
+           <p className="text-slate-500 text-[15px] font-medium max-w-xl italic">
+             {t.subtitle}
+           </p>
         </div>
-
-        {/* Business Plan */}
-        <div className="bg-white border border-slate-200 rounded-[2rem] p-8 lg:p-10 shadow-[0_2px_40px_rgb(0,0,0,0.02)] flex flex-col relative overflow-hidden group hover:border-[#111] hover:shadow-xl transition-all duration-300">
-          <div className="flex justify-between items-start mb-6">
-            <div>
-              <h2 className="text-2xl font-bold text-[#111] mb-2 tracking-tight">
-                {t.business}
-              </h2>
-              <p className="text-[13px] text-slate-500 font-medium">
-                {t.bizDesc}
-              </p>
-            </div>
-            <div className="text-right">
-              <span className="text-3xl font-bold text-[#111]">$99</span>
-              <span className="text-[13px] text-slate-400 font-medium block">
-                {t.perMonth}
+        <div className="bg-slate-50 border border-slate-200/60 rounded-[32px] p-6 flex flex-col gap-4 shadow-sm min-w-[320px]">
+           <div className="flex items-center justify-between">
+              <span className="text-[11px] font-black text-slate-900 uppercase tracking-[0.3em]">{t.usage}</span>
+              <span className="px-2.5 py-1 bg-emerald-500 text-white text-[9px] font-black rounded-full uppercase tracking-widest flex items-center gap-1.5 shadow-sm">
+                 <div className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+                 Active
               </span>
-            </div>
-          </div>
-
-          <div className="w-full h-px bg-slate-100 my-6"></div>
-
-          <ul className="space-y-4 mb-8 flex-1">
-            <li className="flex items-start gap-3">
-              <div className="mt-0.5 shrink-0 w-5 h-5 rounded-full bg-slate-100 flex items-center justify-center">
-                <svg
-                  width="12"
-                  height="12"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="#111"
-                  strokeWidth="3"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <polyline points="20 6 9 17 4 12"></polyline>
-                </svg>
+           </div>
+           <div className="grid grid-cols-2 gap-8">
+              <Metric label="Current Plan" value="Free" />
+              <Metric label="Uptime" value="99.9%" />
+           </div>
+           <div className="space-y-2">
+              <div className="flex justify-between text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                 <span>8 / 50 Credits</span>
+                 <span>16%</span>
               </div>
-              <span className="text-[14px] text-slate-700 font-medium">
-                {t.bizFeature1}
-              </span>
-            </li>
-            <li className="flex items-start gap-3">
-              <div className="mt-0.5 shrink-0 w-5 h-5 rounded-full bg-slate-100 flex items-center justify-center">
-                <svg
-                  width="12"
-                  height="12"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="#111"
-                  strokeWidth="3"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <polyline points="20 6 9 17 4 12"></polyline>
-                </svg>
+              <div className="h-2 w-full bg-slate-200 rounded-full overflow-hidden shadow-inner">
+                 <div className="h-full bg-slate-900 w-[16%] transition-all duration-1000" />
               </div>
-              <span className="text-[14px] text-slate-700 font-medium">
-                {t.bizFeature2}
-              </span>
-            </li>
-            <li className="flex items-start gap-3">
-              <div className="mt-0.5 shrink-0 w-5 h-5 rounded-full bg-slate-100 flex items-center justify-center">
-                <svg
-                  width="12"
-                  height="12"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="#111"
-                  strokeWidth="3"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <polyline points="20 6 9 17 4 12"></polyline>
-                </svg>
-              </div>
-              <span className="text-[14px] text-slate-700 font-medium">
-                {t.bizFeature3}
-              </span>
-            </li>
-            <li className="flex items-start gap-3">
-              <div className="mt-0.5 shrink-0 w-5 h-5 rounded-full bg-slate-100 flex items-center justify-center">
-                <svg
-                  width="12"
-                  height="12"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="#111"
-                  strokeWidth="3"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <polyline points="20 6 9 17 4 12"></polyline>
-                </svg>
-              </div>
-              <span className="text-[14px] text-slate-700 font-medium">
-                {t.bizFeature4}
-              </span>
-            </li>
-          </ul>
-
-          <Button className="w-full bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 rounded-xl h-12 text-[14px] font-bold shadow-sm transition-transform group-hover:scale-[1.02]">
-            {t.contactSales}
-          </Button>
+           </div>
         </div>
       </div>
 
-      <div className="mt-12 text-center">
-        <p className="text-[13px] text-slate-400 font-medium">
-          {t.currentPlan}{" "}
-          <span className="text-slate-700 font-bold">{t.free}</span>.{" "}
-          {t.creditsRemaining}
-        </p>
+      {/* Main Content Area */}
+      <div className="flex-1 overflow-y-auto px-10 py-12 space-y-16">
+        
+        {/* 1. Billing Ledger (PRIORITY) */}
+        <section className="bg-white border border-slate-200 rounded-[40px] p-10 shadow-sm space-y-10">
+           <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                 <div className="w-8 h-8 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center">
+                   <CreditCard className="w-4 h-4 text-slate-900" />
+                 </div>
+                 <h2 className="text-2xl font-serif font-black text-[#111]">{t.billingTitle}</h2>
+              </div>
+              <button className="flex items-center gap-2 text-[11px] font-black text-slate-400 uppercase tracking-widest hover:text-slate-900 transition-all group">
+                 Billing Portal <ExternalLink className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+              </button>
+           </div>
+
+           <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
+              <div className="space-y-2">
+                 <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">{t.billingStatus}</span>
+                 <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
+                    <span className="text-[16px] font-bold text-slate-900">{t.billingActive}</span>
+                 </div>
+              </div>
+              <div className="space-y-2">
+                 <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">{t.billingNext}</span>
+                 <span className="text-[16px] font-bold text-slate-900">May 24, 2026</span>
+              </div>
+              <div className="space-y-2">
+                 <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">{t.billingMethod}</span>
+                 <div className="flex items-center gap-2">
+                    <CreditCard className="w-4 h-4 text-slate-400" />
+                    <span className="text-[16px] font-bold text-slate-900">Visa ending in •••• 4242</span>
+                 </div>
+              </div>
+           </div>
+        </section>
+
+        {/* 2. Credit Reload (NEW) */}
+        <section className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+           <div className="lg:col-span-4 bg-slate-900 rounded-[40px] p-10 text-white relative overflow-hidden flex flex-col justify-between shadow-2xl">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-[#D2E823]/10 rounded-full blur-[60px] -mr-10 -mt-10"></div>
+              <div>
+                 <div className="flex items-center gap-3 mb-6">
+                    <Coins className="w-6 h-6 text-[#D2E823]" />
+                    <h2 className="text-2xl font-serif font-black">{t.creditTitle}</h2>
+                 </div>
+                 <p className="text-slate-400 text-[14px] font-medium leading-relaxed">
+                   {t.creditDesc}
+                 </p>
+              </div>
+              <button className="mt-10 w-full h-14 bg-[#D2E823] text-slate-900 rounded-2xl font-black text-[13px] uppercase tracking-widest hover:scale-105 transition-all shadow-xl active:scale-95">
+                 {t.reloadButton}
+              </button>
+           </div>
+
+           <div className="lg:col-span-8 grid grid-cols-1 md:grid-cols-3 gap-6">
+              {[
+                { amount: "100", price: "$19", color: "bg-slate-100" },
+                { amount: "500", price: "$79", color: "bg-slate-100 border-2 border-slate-900" },
+                { amount: "2000", price: "$249", color: "bg-slate-100" }
+              ].map((pack, i) => (
+                <div key={i} className={`p-8 rounded-[32px] flex flex-col items-center justify-center gap-2 group hover:bg-white hover:shadow-xl transition-all cursor-pointer ${pack.color}`}>
+                   <span className="text-3xl font-black text-slate-900">{pack.amount}</span>
+                   <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Credits</span>
+                   <div className="text-xl font-bold text-slate-900">{pack.price}</div>
+                </div>
+              ))}
+           </div>
+        </section>
+
+        {/* 3. Subscription Tiers */}
+        <div className="space-y-8">
+           <h2 className="text-2xl font-serif font-black text-[#111] px-2">{t.tiersTitle}</h2>
+           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+             {/* Free Tier */}
+             <div className="bg-white border border-slate-200 rounded-[40px] p-8 shadow-sm flex flex-col group hover:border-slate-400 transition-all">
+               <div className="mb-8">
+                 <h3 className="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-4">Base</h3>
+                 <h2 className="text-3xl font-serif font-black text-[#111] mb-2">{t.free}</h2>
+                 <p className="text-[13px] text-slate-500 font-medium">{t.freeDesc}</p>
+               </div>
+               <div className="text-4xl font-black text-[#111] mb-8">$0</div>
+               <button className="w-full py-4 bg-slate-50 border border-slate-200 text-slate-400 rounded-2xl font-black text-[12px] uppercase tracking-widest cursor-default mt-auto">
+                 Current Tier
+               </button>
+             </div>
+
+             {/* Premium Tier */}
+             <div className="bg-white border-2 border-slate-900 rounded-[40px] p-8 shadow-xl flex flex-col relative overflow-hidden group hover:-translate-y-1 transition-all">
+               <div className="absolute top-0 right-0 px-4 py-1.5 bg-[#D2E823] text-slate-900 text-[10px] font-black uppercase tracking-widest rounded-bl-2xl">Recommended</div>
+               <div className="mb-8">
+                 <h3 className="text-[11px] font-black text-slate-900 uppercase tracking-widest mb-4">Growth</h3>
+                 <h2 className="text-3xl font-serif font-black text-[#111] mb-2">{t.premium}</h2>
+                 <p className="text-[13px] text-slate-500 font-medium">{t.premiumDesc}</p>
+               </div>
+               <div className="flex items-baseline gap-1 mb-8">
+                 <span className="text-4xl font-black text-[#111]">$29</span>
+                 <span className="text-[12px] font-bold text-slate-400 uppercase tracking-widest">{t.perMonth}</span>
+               </div>
+               <button className="w-full py-4 bg-slate-900 text-white rounded-2xl font-black text-[12px] uppercase tracking-widest hover:bg-slate-800 transition-all flex items-center justify-center gap-2 shadow-lg mt-auto">
+                 {t.upgradePremium} <Zap className="w-3.5 h-3.5 text-[#D2E823]" />
+               </button>
+             </div>
+
+             {/* Business Tier */}
+             <div className="bg-slate-900 rounded-[40px] p-8 shadow-2xl flex flex-col relative overflow-hidden">
+               <div className="absolute top-0 right-0 w-48 h-48 bg-white/5 rounded-full blur-[60px] -mr-10 -mt-10"></div>
+               <div className="relative z-10 flex flex-col h-full">
+                 <div className="mb-8">
+                   <h3 className="text-[11px] font-black text-slate-500 uppercase tracking-widest mb-4">Scale</h3>
+                   <h2 className="text-3xl font-serif font-black text-white mb-2">{t.business}</h2>
+                   <p className="text-[13px] text-slate-400 font-medium">{t.bizDesc}</p>
+                 </div>
+                 <div className="flex items-baseline gap-1 mb-8">
+                   <span className="text-4xl font-black text-[#D2E823]">$99</span>
+                   <span className="text-[12px] font-bold text-slate-500 uppercase tracking-widest">{t.perMonth}</span>
+                 </div>
+                 <button className="w-full py-4 bg-white text-slate-900 rounded-2xl font-black text-[12px] uppercase tracking-widest hover:bg-slate-50 transition-all flex items-center justify-center gap-2 shadow-lg mt-auto">
+                   {t.contactSales} <ArrowRight className="w-3.5 h-3.5" />
+                 </button>
+               </div>
+             </div>
+           </div>
+        </div>
+
+        {/* FAQ Section */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 pt-10 border-t border-slate-100">
+          <div className="lg:col-span-4">
+             <div className="flex items-center gap-3 mb-4">
+                <HelpCircle className="w-6 h-6 text-slate-900" />
+                <h2 className="text-2xl font-serif font-black text-[#111]">{t.faqTitle}</h2>
+             </div>
+             <p className="text-[14px] text-slate-400 font-medium leading-relaxed">
+               Common inquiries regarding our intelligence engine and subscription model.
+             </p>
+          </div>
+          <div className="lg:col-span-8 grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-10">
+             {faqs.map((faq, i) => (
+               <div key={i} className="space-y-3">
+                  <h4 className="text-[15px] font-black text-[#111] tracking-tight">{faq.q}</h4>
+                  <p className="text-[13px] text-slate-500 font-medium leading-relaxed">{faq.a}</p>
+               </div>
+             ))}
+          </div>
+        </div>
+
       </div>
     </div>
   );

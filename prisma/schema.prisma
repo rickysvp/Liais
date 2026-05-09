@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -17,62 +14,69 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  profile       Profile?
-  subscriptions Subscription[]
-  usageLog      UsageLedger[]
+  profile         Profile?
+  subscriptions   Subscription[]
+  usageLog        UsageLedger[]
   onboardingDraft OnboardingDraft?
 }
 
 model Profile {
-  id                          String   @id @default(uuid())
-  userId                      String   @unique
-  slug                        String   @unique
-  displayName                 String
-  headline                    String?
-  companyOrProject            String?
-  city                        String?
-  whatYouDo                   String?
-  whoYouHelp                  String?
-  currentFocus                String?
-  topicsYouLike               String?
-  websiteUrl                  String?
-  linkedinUrl                 String?
-  twitterUrl                  String?
-  generatedIntro              String?
-  generatedWelcomeMessage     String?
-  generatedContactScopeText   String?
-  primaryConnectionGoal       String?
-  personaType                 String?
-  secretaryTone               String?
-  greetingStyle               String?
-  screeningStyle              String?
-  isPublished                 Boolean  @default(false)
-  createdAt                   DateTime @default(now())
-  updatedAt                   DateTime @updatedAt
+  id                        String   @id @default(uuid())
+  userId                    String   @unique
+  slug                      String   @unique
+  displayName               String
+  headline                  String?
+  companyOrProject          String?
+  city                      String?
+  whatYouDo                 String?
+  whoYouHelp                String?
+  currentFocus              String?
+  topicsYouLike             String?
+  websiteUrl                String?
+  linkedinUrl               String?
+  twitterUrl                String?
+  generatedIntro            String?
+  generatedWelcomeMessage   String?
+  generatedContactScopeText String?
+  primaryConnectionGoal     String?
+  personaType               String?
+  secretaryTone             String?
+  greetingStyle             String?
+  screeningStyle            String?
+  isPublished               Boolean  @default(false)
+  createdAt                 DateTime @default(now())
+  updatedAt                 DateTime @updatedAt
 
-  user                        User                          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  preferences                 ProfileConnectionPreference[]
-  boundaries                  ProfileBoundary[]
-  visitorConversations        VisitorConversation[]
+  user                 User                          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  preferences          ProfileConnectionPreference[]
+  boundaries           ProfileBoundary[]
+  visitorConversations VisitorConversation[]
+  secretaryMessages    SecretaryMessage[]
+
+  @@index([isPublished])
 }
 
 model ProfileConnectionPreference {
-  id        String   @id @default(uuid())
+  id        String @id @default(uuid())
   profileId String
   type      String
-  status    String   // open / closed / preferred
+  status    String
 
   profile Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@index([profileId])
 }
 
 model ProfileBoundary {
-  id            String   @id @default(uuid())
-  profileId     String
-  category      String
-  value         String
-  visibilityType String   // public / restricted / handoff_trigger / never_share
+  id             String @id @default(uuid())
+  profileId      String
+  category       String
+  value          String
+  visibilityType String
 
   profile Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@index([profileId])
 }
 
 model OnboardingDraft {
@@ -80,12 +84,14 @@ model OnboardingDraft {
   sessionId        String?
   userId           String?  @unique
   step             Int      @default(1)
-  payload          String   // JSON string
+  payload          String
   previewGenerated Boolean  @default(false)
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 
   user User? @relation(fields: [userId], references: [id])
+
+  @@index([sessionId])
 }
 
 model VisitorConversation {
@@ -98,7 +104,7 @@ model VisitorConversation {
   visitorIntentCategory String?
   requestedNextStep     String?
   contactInfo           String?
-  transcript            String   // JSON string
+  transcript            String
   summaryText           String?
   qualificationLevel    String?
   suggestedAction       String?
@@ -108,17 +114,23 @@ model VisitorConversation {
   updatedAt             DateTime @updatedAt
 
   profile Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@index([profileId])
+  @@index([status])
+  @@index([profileId, status])
 }
 
 model UsageLedger {
-  id              String   @id @default(uuid())
-  userId          String
-  conversationId  String?
-  actionType      String
-  creditsDelta    Int
-  createdAt       DateTime @default(now())
+  id             String   @id @default(uuid())
+  userId         String
+  conversationId String?
+  actionType     String
+  creditsDelta   Int
+  createdAt      DateTime @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 model Subscription {
@@ -131,4 +143,19 @@ model Subscription {
   updatedAt      DateTime @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model SecretaryMessage {
+  id        String   @id @default(uuid())
+  profileId String
+  role      String
+  content   String
+  createdAt DateTime @default(now())
+
+  profile Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@index([profileId])
+  @@index([profileId, createdAt])
 }

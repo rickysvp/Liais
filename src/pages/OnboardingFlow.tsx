@@ -5,6 +5,31 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";
 
+interface OnboardingPayload {
+  primaryConnectionGoal: string;
+  personaType: string;
+  displayName: string;
+  headline: string;
+  companyOrProject: string;
+  city: string;
+  whatYouDo: string;
+  whoYouHelp: string;
+  currentFocus: string;
+  topicsYouLike: string;
+  secretaryTone: string;
+  linkedinUrl?: string;
+  websiteUrl?: string;
+  twitterUrl?: string;
+  greetingStyle?: string;
+  screeningStyle?: string;
+}
+
+interface GeneratedContent {
+  generatedIntro?: string;
+  generatedWelcomeMessage?: string;
+  generatedContactScopeText?: string;
+}
+
 const AIBubble = ({ children }: { children: React.ReactNode }) => (
   <div className="flex flex-col animate-in fade-in slide-in-from-bottom-4 mt-10 mb-4">
     <div className="flex items-center space-x-2.5 mb-4">
@@ -36,7 +61,7 @@ export default function OnboardingFlow() {
   const navigate = useNavigate();
   const chatEndRef = useRef<HTMLDivElement>(null);
   
-  const [payload, setPayload] = useState<any>({
+  const [payload, setPayload] = useState<OnboardingPayload>({
     primaryConnectionGoal: "",
     personaType: "",
     displayName: "",
@@ -49,10 +74,10 @@ export default function OnboardingFlow() {
     topicsYouLike: "",
     secretaryTone: "Professional",
   });
-  const [generated, setGenerated] = useState<any>(null);
+  const [generated, setGenerated] = useState<GeneratedContent | null>(null);
 
-  const updatePayload = (key: string, value: string) => {
-    setPayload((p: any) => ({ ...p, [key]: value }));
+  const updatePayload = (key: keyof OnboardingPayload, value: string) => {
+    setPayload((p) => ({ ...p, [key]: value }));
   };
 
   const handleLinkedinImport = () => {
@@ -68,7 +93,7 @@ export default function OnboardingFlow() {
         }
       }
       
-      setPayload((prev: any) => ({
+      setPayload((prev) => ({
         ...prev,
         linkedinUrl,
         displayName: mockName,
@@ -111,11 +136,12 @@ export default function OnboardingFlow() {
   const handlePublish = async () => {
     setLoading(true);
     try {
-      const mockUserId = "user-123";
+      const userId = localStorage.getItem("liais_user_id") || crypto.randomUUID();
+      localStorage.setItem("liais_user_id", userId);
       await fetch("/api/profile/publish", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: mockUserId, payload, generated }),
+        body: JSON.stringify({ userId, payload, generated }),
       });
       navigate("/dashboard");
     } catch(e) {
