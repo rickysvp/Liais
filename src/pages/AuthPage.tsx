@@ -13,8 +13,10 @@ function useQueryParams() {
 export default function AuthPage() {
   const navigate = useNavigate();
   const params = useQueryParams();
-  const next = params.get("next") || "/onboarding";
+  const next = params.get("next") || "/dashboard";
   const intent = params.get("intent") || "";
+  const mode = params.get("mode") === "signup" ? "signup" : "login";
+  const isSignupFromOnboarding = mode === "signup" && intent === "publish";
   const { isAuthenticated } = useAuth();
 
   const [email, setEmail] = useState(params.get("email") || "");
@@ -23,18 +25,36 @@ export default function AuthPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (isAuthenticated) {
-      navigate(`${next}${next.includes("?") ? "&" : "?"}authed=1${intent ? `&intent=${intent}` : ""}`, { replace: true });
-      return;
-    }
-    if (!supabase) return;
-    supabase.auth.getSession().then(({ data }) => {
+    async function bootstrapAuth() {
+      if (!supabase) return;
+
+      const code = params.get("code");
+      if (code) {
+        const { data, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
+        if (exchangeError) {
+          setError(exchangeError.message || "Email link is invalid or expired. Please request a new one.");
+        } else if (data.session?.access_token) {
+          localStorage.setItem("liais_access_token", data.session.access_token);
+          setNotice("Email verified. You're now signed in.");
+          navigate(`${next}${next.includes("?") ? "&" : "?"}authed=1${intent ? `&intent=${intent}` : ""}`, { replace: true });
+          return;
+        }
+      }
+
+      if (isAuthenticated) {
+        navigate(`${next}${next.includes("?") ? "&" : "?"}authed=1${intent ? `&intent=${intent}` : ""}`, { replace: true });
+        return;
+      }
+
+      const { data } = await supabase.auth.getSession();
       const token = data.session?.access_token;
       if (!token) return;
       localStorage.setItem("liais_access_token", token);
       navigate(`${next}${next.includes("?") ? "&" : "?"}authed=1${intent ? `&intent=${intent}` : ""}`, { replace: true });
-    });
-  }, [navigate, next, intent, isAuthenticated]);
+    }
+
+    bootstrapAuth();
+  }, [navigate, next, intent, isAuthenticated, params]);
 
   const redirectTo = `${window.location.origin}/auth?next=${encodeURIComponent(next)}${intent ? `&intent=${encodeURIComponent(intent)}` : ""}`;
 
@@ -50,7 +70,11 @@ export default function AuthPage() {
       options: { redirectTo },
     });
     if (authError) {
-      setError(authError.message);
+      if (authError.message.includes("Unsupported provider")) {
+        setError("Google sign-in is not enabled yet. Please use email sign-in or enable Google provider in Supabase.");
+      } else {
+        setError(authError.message);
+      }
       setLoading(false);
     }
   };
@@ -71,6 +95,7 @@ export default function AuthPage() {
       email,
       options: {
         emailRedirectTo: redirectTo,
+        shouldCreateUser: mode === "signup",
       },
     });
     setLoading(false);
@@ -78,14 +103,18 @@ export default function AuthPage() {
       setError(authError.message);
       return;
     }
-    setNotice("Check your email to continue.");
+    setNotice(isSignupFromOnboarding ? "Check your email to confirm registration and continue onboarding." : "Check your email to sign in.");
   };
 
   return (
     <div className="min-h-screen bg-[#F3F3F1] flex items-center justify-center px-6">
       <div className="w-full max-w-md bg-white rounded-3xl border border-slate-200 p-8 shadow-sm space-y-5">
-        <h1 className="text-2xl font-bold text-[#111] tracking-tight">Create your account</h1>
-        <p className="text-sm text-slate-600">Finish account setup to publish your profile and unlock inbox workflows.</p>
+        <h1 className="text-2xl font-bold text-[#111] tracking-tight">{isSignupFromOnboarding ? "Create your account" : "Sign in to Liais"}</h1>
+        <p className="text-sm text-slate-600">
+          {isSignupFromOnboarding
+            ? "Finish account setup to publish your profile and unlock inbox workflows."
+            : "Continue to your dashboard and inbox workflows."}
+        </p>
         {!isSupabaseClientConfigured && (
           <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
             Missing auth config: `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`.
@@ -93,10 +122,14 @@ export default function AuthPage() {
         )}
         {error && <div className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</div>}
         {notice && <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">{notice}</div>}
-        <Button onClick={signInWithGoogle} disabled={loading} className="w-full h-11 bg-slate-900 text-white rounded-xl">
-          Continue with Google
-        </Button>
-        <div className="text-xs text-slate-400 uppercase tracking-widest text-center">or</div>
+        {isSignupFromOnboarding && (
+          <>
+            <Button onClick={signInWithGoogle} disabled={loading} className="w-full h-11 bg-slate-900 text-white rounded-xl">
+              Continue with Google
+            </Button>
+            <div className="text-xs text-slate-400 uppercase tracking-widest text-center">or</div>
+          </>
+        )}
         <Input
           type="email"
           placeholder="you@company.com"
@@ -105,8 +138,13 @@ export default function AuthPage() {
           className="h-11 rounded-xl"
         />
         <Button onClick={signInWithEmail} disabled={loading} className="w-full h-11 rounded-xl">
-          Continue with Email
+          {isSignupFromOnboarding ? "Continue with Email" : "Sign in with Email"}
         </Button>
+        {!isSignupFromOnboarding && (
+          <p className="text-xs text-slate-500 leading-relaxed">
+            New here? Start from onboarding to create your account first.
+          </p>
+        )}
       </div>
     </div>
   );

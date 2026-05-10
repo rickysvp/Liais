@@ -134,6 +134,7 @@ export default function OnboardingFlow() {
         const search = new URLSearchParams({
           next: "/onboarding",
           intent: "publish",
+          mode: "signup",
           ...(accountEmail ? { email: accountEmail } : {}),
         });
         navigate(`/auth?${search.toString()}`);
@@ -197,10 +198,19 @@ export default function OnboardingFlow() {
             <span className="tracking-tight">Liais</span>
             <span className="text-slate-400 font-medium text-sm hidden sm:inline ml-1 uppercase tracking-widest text-[10px]">Setup Agent</span>
           </div>
-          <div className="hidden sm:flex space-x-1.5 items-center">
+          <div className="hidden sm:flex items-center gap-4">
+             <button
+               onClick={() => navigate("/auth?mode=login&next=%2Fdashboard")}
+               className="text-[12px] font-bold uppercase tracking-widest text-slate-500 hover:text-[#111] transition-colors"
+             >
+               Sign In
+             </button>
+             <div className="w-px h-4 bg-slate-200"></div>
+             <div className="flex space-x-1.5 items-center">
              <div className="w-1.5 h-1.5 rounded-full bg-slate-300"></div>
              <div className="w-1.5 h-1.5 rounded-full bg-slate-300"></div>
              <div className="w-1.5 h-1.5 rounded-full bg-slate-800"></div>
+             </div>
           </div>
         </div>
         
